@@ -1,9 +1,10 @@
 import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Palette, Bell, LogOut, Star, Type, Check } from "lucide-react-native";
+import { Palette, Bell, LogOut, Star, Type, Check, Trash2 } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/utils/auth/useAuth";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import Shell from "@/components/Shell";
 import { useTheme } from "@/utils/ThemeProvider";
@@ -14,6 +15,7 @@ export default function MobileSettings() {
   const queryClient = useQueryClient();
   const { signOut, isAuthenticated } = useAuth();
   const { themeColors } = useTheme();
+  const router = useRouter();
 
   const { data: settings } = useQuery({
     queryKey: ["settings"],
@@ -98,9 +100,49 @@ export default function MobileSettings() {
       {
         text: "sign out",
         style: "destructive",
-        onPress: () => signOut(),
+        onPress: async () => { await signOut(); router.replace("/landing"); },
       },
     ]);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "delete account",
+      "this will permanently delete your account and all data. this cannot be undone.",
+      [
+        { text: "cancel", style: "cancel" },
+        {
+          text: "delete account",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "are you sure?",
+              "all your tasks, journal entries, mood logs, and focus sessions will be permanently deleted.",
+              [
+                { text: "cancel", style: "cancel" },
+                {
+                  text: "yes, delete everything",
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      const res = await apiFetch("/api/user/delete", { method: "DELETE" });
+                      if (!res.ok) throw new Error("delete failed");
+                    } catch (error) {
+                      Alert.alert("error", "failed to delete account. please try again.");
+                      return;
+                    }
+                    try {
+                      await signOut();
+                    } catch (_) {}
+                    router.replace("/landing");
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -411,6 +453,31 @@ export default function MobileSettings() {
               </Text>
             </View>
           </TouchableOpacity>
+
+          {isAuthenticated && (
+          <TouchableOpacity
+            onPress={handleDeleteAccount}
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.7)",
+              borderRadius: 24,
+              padding: 24,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
+              <Trash2 size={20} color="#DC2626" />
+              <Text
+                style={{ fontSize: 16, fontWeight: "bold", color: "#DC2626" }}
+              >
+                delete account
+              </Text>
+            </View>
+          </TouchableOpacity>
+          )}
         </View>
 
         <View style={{ alignItems: "center", marginTop: 60, opacity: 0.3 }}>
