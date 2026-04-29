@@ -36,3 +36,7 @@ app-example
 
 caches/
 public/
+
+# Test files
+__tests__/
+coverage/
