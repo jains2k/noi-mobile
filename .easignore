@@ -40,3 +40,7 @@ public/
 # Test files
 __tests__/
 coverage/
+
+# Native directories - let EAS generate fresh from app.json
+ios/
+android/
