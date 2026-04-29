@@ -1,16 +1,16 @@
 {
   "expo": {
     "name": "noi",
-    "slug": "c73300dd-5f5e-4b5e-a4a5-59f9ecd813e4",
+    "slug": "noi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "noi.c73300dd-5f5e-4b5e-a4a5-59f9ecd813e4",
+    "scheme": "com.tvishaj.noi",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.createinc.c73300dd5f5e4b5ea4a559f9ecd813e4",
+      "bundleIdentifier": "com.tvishaj.noi",
       "infoPlist": {
         "NSCameraUsageDescription": "This app does not use your camera.",
         "NSContactsUsageDescription": "This app does not use your contacts.",
@@ -49,20 +49,17 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ],
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
+    "owner": "tvishaj08",
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "cec69f52-65eb-4ad5-96e6-d347efbb04a6"
+        "projectId": "5193d01d-d4b4-492f-9024-a9b18a0f2d4f"
       }
-    },
-    "owner": "create-inc",
-    "updates": {
-      "url": "https://u.expo.dev/cec69f52-65eb-4ad5-96e6-d347efbb04a6"
     }
   }
 }
