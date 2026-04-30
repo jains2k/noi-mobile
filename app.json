@@ -11,6 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.createinc.c73300dd5f5e4b5ea4a559f9ecd813e4",
+      "buildNumber": "23",
       "infoPlist": {
         "NSCameraUsageDescription": "This app does not use your camera.",
         "NSContactsUsageDescription": "This app does not use your contacts.",
