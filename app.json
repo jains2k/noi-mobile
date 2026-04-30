@@ -5,12 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "com.tvishaj.noi",
+    "scheme": "com.createinc.c73300dd5f5e4b5ea4a559f9ecd813e4",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tvishaj.noi",
+      "bundleIdentifier": "com.createinc.c73300dd5f5e4b5ea4a559f9ecd813e4",
       "infoPlist": {
         "NSCameraUsageDescription": "This app does not use your camera.",
         "NSContactsUsageDescription": "This app does not use your contacts.",
