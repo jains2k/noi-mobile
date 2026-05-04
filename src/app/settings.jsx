@@ -1,6 +1,6 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Palette, Bell, LogOut, Star, Type, Check, Trash2 } from "lucide-react-native";
+import { Palette, Bell, LogOut, Star, Type, Check, Trash2, HelpCircle } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/utils/auth/useAuth";
@@ -429,6 +429,30 @@ export default function MobileSettings() {
               </View>
             </View>
           </View>
+
+          {/* Help & Support */}
+          <TouchableOpacity
+            onPress={() => Linking.openURL("https://noi-web.fly.dev/support")}
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.7)",
+              borderRadius: 24,
+              padding: 24,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
+              <HelpCircle size={20} color={themeColors.primary} />
+              <Text
+                style={{ fontSize: 16, fontWeight: "bold", color: "#374151" }}
+              >
+                help & support
+              </Text>
+            </View>
+          </TouchableOpacity>
 
           {/* Account Section */}
           <TouchableOpacity
