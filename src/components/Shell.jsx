@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Modal, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 import {
   Star,
   LayoutGrid,
@@ -17,8 +18,11 @@ import { useAuth } from "@/utils/auth/useAuth";
 import useUser from "@/utils/auth/useUser";
 import { useTheme } from "@/utils/ThemeProvider";
 
+const FALLBACK_TOP = Platform.OS === "ios" ? 47 : Constants.statusBarHeight || 24;
+
 export default function Shell({ children }) {
   const insets = useSafeAreaInsets();
+  const safeTop = Math.max(insets.top, Constants.statusBarHeight || 0, FALLBACK_TOP);
   const router = useRouter();
   const pathname = usePathname();
   const { signOut } = useAuth();
@@ -46,7 +50,7 @@ export default function Shell({ children }) {
       {/* Mobile Header */}
       <View
         style={{
-          paddingTop: insets.top + 12,
+          paddingTop: safeTop + 12,
           paddingBottom: 12,
           paddingHorizontal: 20,
           backgroundColor: "rgba(255, 255, 255, 0.4)",
