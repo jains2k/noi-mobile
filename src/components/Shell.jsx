@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal, Platform } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import {
   Star,
@@ -18,11 +18,8 @@ import { useAuth } from "@/utils/auth/useAuth";
 import useUser from "@/utils/auth/useUser";
 import { useTheme } from "@/utils/ThemeProvider";
 
-const FALLBACK_TOP = Platform.OS === "ios" ? 60 : Constants.statusBarHeight || 24;
-
 export default function Shell({ children }) {
   const insets = useSafeAreaInsets();
-  const safeTop = Math.max(insets.top, Constants.statusBarHeight || 0, FALLBACK_TOP);
   const router = useRouter();
   const pathname = usePathname();
   const { signOut } = useAuth();
@@ -48,19 +45,25 @@ export default function Shell({ children }) {
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.bg1, fontFamily }}>
       {/* Mobile Header */}
-      <View
+      <SafeAreaView
+        edges={["top"]}
         style={{
-          paddingTop: safeTop + 12,
-          paddingBottom: 12,
-          paddingHorizontal: 20,
           backgroundColor: "rgba(255, 255, 255, 0.4)",
           borderBottomWidth: 1,
           borderBottomColor: "rgba(255, 255, 255, 0.2)",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
+          minHeight: (Constants.statusBarHeight || 0) + 48,
         }}
       >
+        <View
+          style={{
+            paddingTop: 12,
+            paddingBottom: 12,
+            paddingHorizontal: 20,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Star
             size={20}
@@ -84,7 +87,8 @@ export default function Shell({ children }) {
         >
           <Menu size={24} color={themeColors.primary} />
         </TouchableOpacity>
-      </View>
+        </View>
+      </SafeAreaView>
 
       {/* Main Content */}
       <ScrollView
