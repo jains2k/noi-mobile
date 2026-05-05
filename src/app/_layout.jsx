@@ -5,6 +5,7 @@ import { useAuth } from "@/utils/auth/useAuth";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ThemeProvider } from "@/utils/ThemeProvider";
 import { View, ActivityIndicator } from "react-native";
 import {
@@ -88,9 +89,10 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <Stack screenOptions={{ headerShown: false }}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="landing" options={{ headerShown: false }} />
             <Stack.Screen name="dashboard" options={{ headerShown: false }} />
@@ -101,8 +103,9 @@ export default function RootLayout() {
             <Stack.Screen name="settings" options={{ headerShown: false }} />
           </Stack>
           <AuthModal />
-        </GestureHandlerRootView>
-      </ThemeProvider>
+          </GestureHandlerRootView>
+        </ThemeProvider>
+      </SafeAreaProvider>
     </QueryClientProvider>
   );
 }
