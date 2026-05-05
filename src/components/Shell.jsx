@@ -18,7 +18,7 @@ import { useAuth } from "@/utils/auth/useAuth";
 import useUser from "@/utils/auth/useUser";
 import { useTheme } from "@/utils/ThemeProvider";
 
-const FALLBACK_TOP = Platform.OS === "ios" ? 47 : Constants.statusBarHeight || 24;
+const FALLBACK_TOP = Platform.OS === "ios" ? 60 : Constants.statusBarHeight || 24;
 
 export default function Shell({ children }) {
   const insets = useSafeAreaInsets();
