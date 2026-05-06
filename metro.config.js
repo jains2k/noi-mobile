@@ -1,7 +1,6 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('node:path');
 const fs = require('node:fs');
-const { FileStore } = require('metro-cache');
 const { reportErrorToRemote } = require('./__create/report-error-to-remote');
 const {
   handleResolveRequestError,
@@ -102,14 +101,6 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   }
 };
 
-const cacheDir = path.join(__dirname, 'caches');
-
-config.cacheStores = () => [
-  new FileStore({
-    root: path.join(cacheDir, '.metro-cache'),
-  }),
-];
-config.resetCache = false;
 config.reporter = {
   ...config.reporter,
   update: (event) => {
@@ -131,18 +122,5 @@ config.reporter = {
     return event;
   },
 };
-
-const originalGetTransformOptions = config.transformer.getTransformOptions;
-
-config.transformer = {
-  ...config.transformer,
-  getTransformOptions: async (entryPoints, options) => {
-    if (options.dev === false) { 
-      fs.rmSync(cacheDir, { recursive: true, force: true });
-      fs.mkdirSync(cacheDir);
-    }
-    return await originalGetTransformOptions(entryPoints, options)
-  },
-}
 
 module.exports = config;
