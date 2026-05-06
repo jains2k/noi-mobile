@@ -1,6 +1,12 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import Constants from "expo-constants";
+import { View, Text, TouchableOpacity, ScrollView, Modal, Platform, StatusBar } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// On iOS, useSafeAreaInsets() can momentarily return 0 (or stay 0 with some
+// SafeAreaProvider setups under New Arch). Use the inset when available, fall
+// back to a minimum that clears the status bar / Dynamic Island on every device.
+// 47 covers iPhone SE / 8-style notches; 59 covers Dynamic Island. We pick the
+// larger of the measured inset and 47, so the layout is correct on all devices.
+const MIN_TOP = Platform.OS === "ios" ? 47 : (StatusBar.currentHeight || 24);
 import {
   Star,
   LayoutGrid,
@@ -20,6 +26,7 @@ import { useTheme } from "@/utils/ThemeProvider";
 
 export default function Shell({ children }) {
   const insets = useSafeAreaInsets();
+  const safeTop = Math.max(insets.top || 0, MIN_TOP);
   const router = useRouter();
   const pathname = usePathname();
   const { signOut } = useAuth();
@@ -44,52 +51,60 @@ export default function Shell({ children }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.bg1, fontFamily }}>
-      {/* Mobile Header */}
-      <SafeAreaView
-        edges={["top"]}
+      {/* DEBUG: prominent diagnostic strip showing build + computed inset values */}
+      <View style={{ backgroundColor: "magenta", paddingTop: insets.top, paddingBottom: 6, paddingHorizontal: 12 }}>
+        <Text style={{ color: "white", fontWeight: "bold", fontSize: 14, textAlign: "center" }}>
+          SHELL B32 · insets.top={Math.round(insets.top)} safeTop={Math.round(safeTop)}
+        </Text>
+      </View>
+      {/* Mobile Header — bright red bg so we see exactly where it sits */}
+      <View
         style={{
-          backgroundColor: "rgba(255, 255, 255, 0.4)",
+          paddingTop: safeTop + 12,
+          paddingBottom: 12,
+          paddingHorizontal: 20,
+          backgroundColor: "red",
           borderBottomWidth: 1,
           borderBottomColor: "rgba(255, 255, 255, 0.2)",
-          minHeight: (Constants.statusBarHeight || 0) + 48,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <View
-          style={{
-            paddingTop: 12,
-            paddingBottom: 12,
-            paddingHorizontal: 20,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Star
             size={20}
-            color={themeColors.primary}
-            fill={themeColors.primary}
+            color="white"
+            fill="white"
           />
           <Text
             style={{
               fontSize: 20,
               fontWeight: "bold",
-              color: themeColors.primary,
+              color: "white",
               fontFamily,
             }}
           >
-            noi
+            noi (header pt={Math.round(safeTop + 12)})
           </Text>
         </View>
         <TouchableOpacity
           onPress={() => setMenuOpen(true)}
           style={{ padding: 8 }}
         >
-          <Menu size={24} color={themeColors.primary} />
+          <Menu size={24} color="white" />
         </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+      </View>
 
+      {/* DEBUG: second copy of diagnostic values mid-page in case top strip is hidden */}
+      <View style={{ backgroundColor: "magenta", padding: 16, marginTop: 20, marginHorizontal: 16, borderRadius: 8, borderWidth: 3, borderColor: "yellow" }}>
+        <Text style={{ color: "white", fontWeight: "bold", fontSize: 18, textAlign: "center" }}>
+          MID-PAGE DIAGNOSTIC
+        </Text>
+        <Text style={{ color: "white", fontWeight: "bold", fontSize: 16, textAlign: "center", marginTop: 4 }}>
+          B32 · insets.top={Math.round(insets.top)} safeTop={Math.round(safeTop)} pt={Math.round(safeTop + 12)}
+        </Text>
+      </View>
       {/* Main Content */}
       <ScrollView
         style={{ flex: 1 }}

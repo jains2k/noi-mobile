@@ -71,6 +71,11 @@ export default function FocusPage() {
   return (
     <Shell>
       <StatusBar style="dark" />
+      <View style={{ backgroundColor: "deeppink", padding: 12 }}>
+        <Text style={{ fontSize: 16, fontWeight: "bold", color: "white", textAlign: "center" }}>
+          FOCUS B32 — if you see this, focus.jsx is current
+        </Text>
+      </View>
       <View
         style={{
           flex: 1,

@@ -148,6 +148,11 @@ export default function MobileSettings() {
   return (
     <Shell>
       <StatusBar style="dark" />
+      <View style={{ backgroundColor: "dodgerblue", padding: 12 }}>
+        <Text style={{ fontSize: 16, fontWeight: "bold", color: "white", textAlign: "center" }}>
+          SETTINGS B32 — if you see this, settings.jsx is current
+        </Text>
+      </View>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
