@@ -165,7 +165,7 @@ export default function TasksPage() {
       <StatusBar style="dark" />
       <View style={{ backgroundColor: "cyan", padding: 12 }}>
         <Text style={{ fontSize: 16, fontWeight: "bold", color: "black", textAlign: "center" }}>
-          TASKS B32 — if you see this, tasks.jsx is current
+          TASKS B33 — if you see this, tasks.jsx is current
         </Text>
       </View>
       <View style={{ padding: 20, gap: 40 }}>

@@ -54,7 +54,7 @@ export default function Shell({ children }) {
       {/* DEBUG: prominent diagnostic strip showing build + computed inset values */}
       <View style={{ backgroundColor: "magenta", paddingTop: insets.top, paddingBottom: 6, paddingHorizontal: 12 }}>
         <Text style={{ color: "white", fontWeight: "bold", fontSize: 14, textAlign: "center" }}>
-          SHELL B32 · insets.top={Math.round(insets.top)} safeTop={Math.round(safeTop)}
+          SHELL B33 · insets.top={Math.round(insets.top)} safeTop={Math.round(safeTop)}
         </Text>
       </View>
       {/* Mobile Header — bright red bg so we see exactly where it sits */}
@@ -102,7 +102,7 @@ export default function Shell({ children }) {
           MID-PAGE DIAGNOSTIC
         </Text>
         <Text style={{ color: "white", fontWeight: "bold", fontSize: 16, textAlign: "center", marginTop: 4 }}>
-          B32 · insets.top={Math.round(insets.top)} safeTop={Math.round(safeTop)} pt={Math.round(safeTop + 12)}
+          B33 · insets.top={Math.round(insets.top)} safeTop={Math.round(safeTop)} pt={Math.round(safeTop + 12)}
         </Text>
       </View>
       {/* Main Content */}

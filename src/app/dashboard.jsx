@@ -204,7 +204,7 @@ export default function Dashboard() {
       <StatusBar style="dark" />
       <View style={{ backgroundColor: "yellow", padding: 12 }}>
         <Text style={{ fontSize: 16, fontWeight: "bold", color: "black", textAlign: "center" }}>
-          DASHBOARD B32 — if you see this, dashboard.jsx is current
+          DASHBOARD B33 — if you see this, dashboard.jsx is current
         </Text>
       </View>
       <View style={{ padding: 20, gap: 40 }}>

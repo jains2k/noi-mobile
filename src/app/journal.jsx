@@ -135,7 +135,7 @@ export default function JournalPage() {
       <StatusBar style="dark" />
       <View style={{ backgroundColor: "orange", padding: 12 }}>
         <Text style={{ fontSize: 16, fontWeight: "bold", color: "black", textAlign: "center" }}>
-          JOURNAL B32 — if you see this, journal.jsx is current
+          JOURNAL B33 — if you see this, journal.jsx is current
         </Text>
       </View>
       <View style={{ padding: 20, gap: 40 }}>

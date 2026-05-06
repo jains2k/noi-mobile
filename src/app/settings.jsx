@@ -150,7 +150,7 @@ export default function MobileSettings() {
       <StatusBar style="dark" />
       <View style={{ backgroundColor: "dodgerblue", padding: 12 }}>
         <Text style={{ fontSize: 16, fontWeight: "bold", color: "white", textAlign: "center" }}>
-          SETTINGS B32 — if you see this, settings.jsx is current
+          SETTINGS B33 — if you see this, settings.jsx is current
         </Text>
       </View>
       <ScrollView
