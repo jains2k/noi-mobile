@@ -1,12 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal, Platform, StatusBar } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-// On iOS, useSafeAreaInsets() can momentarily return 0 (or stay 0 with some
-// SafeAreaProvider setups under New Arch). Use the inset when available, fall
-// back to a minimum that clears the status bar / Dynamic Island on every device.
-// 47 covers iPhone SE / 8-style notches; 59 covers Dynamic Island. We pick the
-// larger of the measured inset and 47, so the layout is correct on all devices.
-const MIN_TOP = Platform.OS === "ios" ? 47 : (StatusBar.currentHeight || 24);
 import {
   Star,
   LayoutGrid,
@@ -23,10 +16,11 @@ import { useRouter, usePathname } from "expo-router";
 import { useAuth } from "@/utils/auth/useAuth";
 import useUser from "@/utils/auth/useUser";
 import { useTheme } from "@/utils/ThemeProvider";
+import { getShellTopInset } from "@/utils/safeArea";
 
 export default function Shell({ children }) {
   const insets = useSafeAreaInsets();
-  const safeTop = Math.max(insets.top || 0, MIN_TOP);
+  const safeTop = getShellTopInset(insets);
   const router = useRouter();
   const pathname = usePathname();
   const { signOut } = useAuth();
@@ -51,61 +45,12 @@ export default function Shell({ children }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.bg1, fontFamily }}>
-      {/* DEBUG: prominent diagnostic strip showing build + computed inset values */}
-      <View style={{ backgroundColor: "magenta", paddingTop: insets.top, paddingBottom: 6, paddingHorizontal: 12 }}>
-        <Text style={{ color: "white", fontWeight: "bold", fontSize: 14, textAlign: "center" }}>
-          SHELL B33 · insets.top={Math.round(insets.top)} safeTop={Math.round(safeTop)}
-        </Text>
-      </View>
-      {/* Mobile Header — bright red bg so we see exactly where it sits */}
       <View
-        style={{
-          paddingTop: safeTop + 12,
-          paddingBottom: 12,
-          paddingHorizontal: 20,
-          backgroundColor: "red",
-          borderBottomWidth: 1,
-          borderBottomColor: "rgba(255, 255, 255, 0.2)",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Star
-            size={20}
-            color="white"
-            fill="white"
-          />
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: "bold",
-              color: "white",
-              fontFamily,
-            }}
-          >
-            noi (header pt={Math.round(safeTop + 12)})
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => setMenuOpen(true)}
-          style={{ padding: 8 }}
-        >
-          <Menu size={24} color="white" />
-        </TouchableOpacity>
-      </View>
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{ height: safeTop, backgroundColor: themeColors.bg1 }}
+      />
 
-      {/* DEBUG: second copy of diagnostic values mid-page in case top strip is hidden */}
-      <View style={{ backgroundColor: "magenta", padding: 16, marginTop: 20, marginHorizontal: 16, borderRadius: 8, borderWidth: 3, borderColor: "yellow" }}>
-        <Text style={{ color: "white", fontWeight: "bold", fontSize: 18, textAlign: "center" }}>
-          MID-PAGE DIAGNOSTIC
-        </Text>
-        <Text style={{ color: "white", fontWeight: "bold", fontSize: 16, textAlign: "center", marginTop: 4 }}>
-          B33 · insets.top={Math.round(insets.top)} safeTop={Math.round(safeTop)} pt={Math.round(safeTop + 12)}
-        </Text>
-      </View>
-      {/* Main Content */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
@@ -113,6 +58,30 @@ export default function Shell({ children }) {
       >
         {children}
       </ScrollView>
+
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel="Open navigation menu"
+        onPress={() => setMenuOpen(true)}
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: insets.bottom + 24,
+          width: 52,
+          height: 52,
+          borderRadius: 26,
+          backgroundColor: themeColors.primary,
+          alignItems: "center",
+          justifyContent: "center",
+          shadowColor: "#000",
+          shadowOpacity: 0.12,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 6,
+        }}
+      >
+        <Menu size={26} color="#FFF" />
+      </TouchableOpacity>
 
       {/* Menu Modal */}
       <Modal

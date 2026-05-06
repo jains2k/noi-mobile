@@ -5,9 +5,10 @@ import { useAuth } from "@/utils/auth/useAuth";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-// SafeAreaProvider is provided automatically by Expo Router for every route.
-// Adding a second one here can shadow the inner one and cause useSafeAreaInsets
-// to return 0 on iOS with newArchEnabled. So we don't import it manually.
+import {
+  SafeAreaProvider,
+  initialWindowMetrics,
+} from "react-native-safe-area-context";
 import { ThemeProvider } from "@/utils/ThemeProvider";
 import { View, ActivityIndicator } from "react-native";
 import {
@@ -92,19 +93,21 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="landing" options={{ headerShown: false }} />
-            <Stack.Screen name="dashboard" options={{ headerShown: false }} />
-            <Stack.Screen name="tasks" options={{ headerShown: false }} />
-            <Stack.Screen name="journal" options={{ headerShown: false }} />
-            <Stack.Screen name="focus" options={{ headerShown: false }} />
-            <Stack.Screen name="calendar" options={{ headerShown: false }} />
-            <Stack.Screen name="settings" options={{ headerShown: false }} />
-          </Stack>
-          <AuthModal />
-        </GestureHandlerRootView>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="landing" options={{ headerShown: false }} />
+              <Stack.Screen name="dashboard" options={{ headerShown: false }} />
+              <Stack.Screen name="tasks" options={{ headerShown: false }} />
+              <Stack.Screen name="journal" options={{ headerShown: false }} />
+              <Stack.Screen name="focus" options={{ headerShown: false }} />
+              <Stack.Screen name="calendar" options={{ headerShown: false }} />
+              <Stack.Screen name="settings" options={{ headerShown: false }} />
+            </Stack>
+            <AuthModal />
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

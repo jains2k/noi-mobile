@@ -12,13 +12,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-There are no scripts in package.json beyond `postinstall`. Use Expo CLI directly:
+Use the npm scripts for repeatable local checks and Expo CLI for device builds:
 
 ```bash
 npx expo start              # Start dev server (choose iOS/Android/Web)
+npx expo start --dev-client --clear # Start Metro for the native development build
 npx expo start --web        # Web only
 npx expo run:ios            # Build and run on iOS simulator
 npx expo run:android        # Build and run on Android emulator
+npm test                    # Run Jest tests
+npx expo export --platform ios --output-dir /private/tmp/noi-mobile-export # Verify iOS JS bundle compiles
 eas build --platform ios    # EAS cloud build for iOS
 eas build --platform android # EAS cloud build for Android
 ```
@@ -64,7 +67,9 @@ React Query query keys: `["tasks"]`, `["moods"]`, `["settings"]`, `["user"]`. Mu
 
 ### Shell Component
 
-`src/components/Shell.jsx` is the main layout wrapper used by all authenticated screens — provides the header, navigation menu, and bottom padding.
+`src/components/Shell.jsx` is the main layout wrapper used by all authenticated screens — provides safe top spacing, a floating navigation menu button, modal navigation, and bottom padding. It depends on the root `SafeAreaProvider` in `src/app/_layout.jsx` and uses `src/utils/safeArea.js` to keep authenticated content below the iOS status bar/notch even when native insets briefly report `0`.
+
+`src/utils/diagnostics.js` contains temporary visible runtime labels used to confirm that the simulator is loading the current JS bundle while investigating native/development-build cache issues.
 
 ## Key Directories
 

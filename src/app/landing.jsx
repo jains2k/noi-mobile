@@ -52,12 +52,6 @@ export default function LandingPage() {
   return (
     <View style={{ flex: 1, backgroundColor: "#FAF5FF" }}>
       <StatusBar style="dark" />
-      {/* DEBUG: build identifier — visible at top of every landing visit */}
-      <View style={{ position: "absolute", top: insets.top, left: 0, right: 0, zIndex: 99999, backgroundColor: "lime", padding: 8 }}>
-        <Text style={{ color: "black", fontWeight: "bold", textAlign: "center", fontSize: 16 }}>
-          BUILD 33 · landing insets.top = {Math.round(insets.top)}
-        </Text>
-      </View>
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 60,
