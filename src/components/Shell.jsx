@@ -16,11 +16,9 @@ import { useRouter, usePathname } from "expo-router";
 import { useAuth } from "@/utils/auth/useAuth";
 import useUser from "@/utils/auth/useUser";
 import { useTheme } from "@/utils/ThemeProvider";
-import { getShellTopInset } from "@/utils/safeArea";
 
 export default function Shell({ children }) {
   const insets = useSafeAreaInsets();
-  const safeTop = getShellTopInset(insets);
   const router = useRouter();
   const pathname = usePathname();
   const { signOut } = useAuth();
@@ -46,10 +44,40 @@ export default function Shell({ children }) {
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.bg1, fontFamily }}>
       <View
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={{ height: safeTop, backgroundColor: themeColors.bg1 }}
-      />
+        style={{
+          paddingTop: insets.top + 4,
+          paddingBottom: 8,
+          paddingHorizontal: 20,
+          backgroundColor: "rgba(255, 255, 255, 0.4)",
+          borderBottomWidth: 1,
+          borderBottomColor: "rgba(255, 255, 255, 0.2)",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Star size={20} color={themeColors.primary} fill={themeColors.primary} />
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "bold",
+              color: themeColors.primary,
+              fontFamily,
+            }}
+          >
+            noi
+          </Text>
+        </View>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Open navigation menu"
+          onPress={() => setMenuOpen(true)}
+          style={{ padding: 8 }}
+        >
+          <Menu size={24} color={themeColors.primary} />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
         style={{ flex: 1 }}
@@ -58,30 +86,6 @@ export default function Shell({ children }) {
       >
         {children}
       </ScrollView>
-
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel="Open navigation menu"
-        onPress={() => setMenuOpen(true)}
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: insets.bottom + 24,
-          width: 52,
-          height: 52,
-          borderRadius: 26,
-          backgroundColor: themeColors.primary,
-          alignItems: "center",
-          justifyContent: "center",
-          shadowColor: "#000",
-          shadowOpacity: 0.12,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 6 },
-          elevation: 6,
-        }}
-      >
-        <Menu size={26} color="#FFF" />
-      </TouchableOpacity>
 
       {/* Menu Modal */}
       <Modal

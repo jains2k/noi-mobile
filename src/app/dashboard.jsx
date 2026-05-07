@@ -26,7 +26,6 @@ import useUser from "@/utils/auth/useUser";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "@/utils/auth/useAuth";
 import { apiFetch } from "@/utils/api";
-import { DASHBOARD_RUNTIME_MARKER } from "@/utils/diagnostics";
 
 export default function Dashboard() {
   const { data: user } = useUser();
@@ -227,12 +226,6 @@ export default function Dashboard() {
               {affirmation}
             </Text>
           </View>
-          <Text
-            accessibilityLabel="Dashboard runtime marker"
-            style={{ marginTop: 8, fontSize: 10, color: "#A78BFA" }}
-          >
-            {DASHBOARD_RUNTIME_MARKER}
-          </Text>
         </View>
 
         {/* Energy Selector */}
