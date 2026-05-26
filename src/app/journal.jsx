@@ -163,13 +163,7 @@ export default function JournalPage() {
             gap: 24,
           }}
         >
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <View style={{ gap: 16 }}>
             <Text
               style={{
                 fontSize: 12,
@@ -181,13 +175,19 @@ export default function JournalPage() {
             >
               {format(new Date(), "EEEE, MMMM do")}
             </Text>
-            <View style={{ flexDirection: "row", gap: 8 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
               {moodEmojis.map((emoji, i) => (
                 <TouchableOpacity
                   key={i}
                   onPress={() => setMoodScore(i + 1)}
                   style={{
-                    padding: 8,
+                    paddingVertical: 6,
+                    paddingHorizontal: 8,
                     borderRadius: 12,
                     backgroundColor:
                       moodScore === i + 1

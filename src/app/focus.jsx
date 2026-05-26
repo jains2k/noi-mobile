@@ -140,11 +140,20 @@ export default function FocusPage() {
         </View>
 
         {/* Duration Controls */}
-        <View style={{ flexDirection: "row", gap: 32 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 12,
+            alignSelf: "stretch",
+            paddingHorizontal: 4,
+          }}
+        >
           <View
             style={{
+              flex: 1,
               backgroundColor: "rgba(255, 255, 255, 0.4)",
-              padding: 24,
+              paddingVertical: 16,
+              paddingHorizontal: 12,
               borderRadius: 24,
               gap: 12,
               alignItems: "center",
@@ -162,7 +171,7 @@ export default function FocusPage() {
               focus duration
             </Text>
             <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
               <TouchableOpacity
                 onPress={() => setFocusDuration(Math.max(1, focusDuration - 5))}
@@ -179,10 +188,10 @@ export default function FocusPage() {
               </TouchableOpacity>
               <Text
                 style={{
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: "bold",
                   color: "#1F2937",
-                  width: 64,
+                  width: 48,
                   textAlign: "center",
                 }}
               >
@@ -206,8 +215,10 @@ export default function FocusPage() {
 
           <View
             style={{
+              flex: 1,
               backgroundColor: "rgba(255, 255, 255, 0.4)",
-              padding: 24,
+              paddingVertical: 16,
+              paddingHorizontal: 12,
               borderRadius: 24,
               gap: 12,
               alignItems: "center",
@@ -225,7 +236,7 @@ export default function FocusPage() {
               break duration
             </Text>
             <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
               <TouchableOpacity
                 onPress={() => setBreakDuration(Math.max(1, breakDuration - 1))}
@@ -242,10 +253,10 @@ export default function FocusPage() {
               </TouchableOpacity>
               <Text
                 style={{
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: "bold",
                   color: "#1F2937",
-                  width: 64,
+                  width: 48,
                   textAlign: "center",
                 }}
               >
