@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useState, useEffect } from "react";
 import Shell from "@/components/Shell";
@@ -112,18 +113,16 @@ export default function Dashboard() {
   const magicSortMutation = useMutation({
     mutationFn: async (text) => {
       setIsSorting(true);
-      try {
-        const res = await apiFetch("/api/ai", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "magic-sort", text }),
-        });
-        if (!res.ok) throw new Error("magic sort failed");
-        return res.json();
-      } catch (error) {
-        console.error("Error with magic sort:", error);
-        throw error;
+      const res = await apiFetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "magic-sort", text }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "magic sort failed");
       }
+      return res.json();
     },
     onSuccess: async (data) => {
       try {
@@ -150,6 +149,10 @@ export default function Dashboard() {
     onError: (error) => {
       console.error("Magic sort error:", error);
       setIsSorting(false);
+      Alert.alert(
+        "couldn't sort your thoughts",
+        error?.message || "please try again in a moment",
+      );
     },
   });
 
