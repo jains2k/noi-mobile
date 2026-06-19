@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert, Linking } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Palette, Bell, LogOut, Star, Type, Check, Trash2, HelpCircle } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -447,7 +448,7 @@ export default function MobileSettings() {
             >
               <HelpCircle size={20} color={themeColors.primary} />
               <Text
-                style={{ fontSize: 16, fontWeight: "bold", color: "#374151" }}
+                style={{ fontSize: 16, fontWeight: "bold", color: themeColors.primary }}
               >
                 help & support
               </Text>
