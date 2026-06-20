@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack, usePathname, useRouter } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthModal } from "@/utils/auth/useAuthModal";
 import { useAuth } from "@/utils/auth/useAuth";
@@ -35,6 +35,25 @@ import {
 import { SpaceMono_400Regular } from "@expo-google-fonts/space-mono";
 
 SplashScreen.preventAutoHideAsync();
+
+// Routes that are reachable while signed out. Everything else requires auth, so
+// when the session is cleared (e.g. a 401 invalidated a stale token) we send the
+// user back to the landing screen instead of leaving them on a broken UI.
+const PUBLIC_ROUTES = ["/", "/landing"];
+
+function SessionGuard() {
+  const { isReady, isAuthenticated } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isReady && !isAuthenticated && !PUBLIC_ROUTES.includes(pathname)) {
+      router.replace("/landing");
+    }
+  }, [isReady, isAuthenticated, pathname, router]);
+
+  return null;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,6 +124,7 @@ export default function RootLayout() {
               <Stack.Screen name="calendar" options={{ headerShown: false }} />
               <Stack.Screen name="settings" options={{ headerShown: false }} />
             </Stack>
+            <SessionGuard />
             <AuthModal />
           </GestureHandlerRootView>
         </SafeAreaProvider>

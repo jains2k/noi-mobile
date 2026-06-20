@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { fetch as expoFetch } from 'expo/fetch';
+import { useAuthStore } from '@/utils/auth/store';
 
 const originalFetch = fetch;
 const authKey = `${process.env.EXPO_PUBLIC_PROJECT_GROUP_ID || 'noi-app'}-jwt`;
@@ -69,10 +70,20 @@ const fetchToWeb = async function fetchWithHeaders(...args: Params) {
     finalHeaders.set('authorization', `Bearer ${auth.jwt}`);
   }
 
-  return expoFetch(finalInput, {
+  const response = await expoFetch(finalInput, {
     ...init,
     headers: finalHeaders,
   });
+
+  // If we sent a token and the server rejected it (401), the stored token is
+  // stale/invalid. Clear it so the app routes back to sign-in instead of
+  // silently showing a broken, empty authenticated UI. (Login itself happens
+  // in the AuthWebView, not through this interceptor, so this won't disrupt it.)
+  if (auth && response.status === 401) {
+    useAuthStore.getState().setAuth(null);
+  }
+
+  return response;
 };
 
 export default fetchToWeb;

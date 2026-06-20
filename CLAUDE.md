@@ -2,13 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Cross-Platform Requirement (must read)
+
+**Every change must work on BOTH iOS and web.** This app ships from a single codebase that runs natively on iOS and as React Native Web via the Metro bundler (`npx expo start --web`), so "web" means the React Native Web build of this app — not the separate `apps/web` Next.js app. (There is no Android app yet — the stack supports it, but it isn't built or targeted, so don't treat Android as a required verification target.)
+
+Rules:
+- Prefer cross-platform APIs. Don't use a native-only module (e.g. `expo-secure-store`, `react-native-webview`, `react-native-maps`) unless it has a web alias in `metro.config.js` → `polyfills/web/`. If you introduce a native-only dependency, add a matching `polyfills/web/*.web.*` shim and wire it into `WEB_ALIASES`.
+- After any change, verify both bundles compile:
+  - `npx expo export --platform ios --output-dir /private/tmp/noi-mobile-export`
+  - `npx expo export --platform web --output-dir /private/tmp/noi-web-export`
+- Shared logic (auth store, `src/__create/fetch.ts`, routing in `src/app/`) runs identically on every platform — changes there automatically apply to web, so test the web build too.
+
 ## Tech Stack
 
 - **Framework**: React Native 0.81.4 + Expo 54
 - **Routing**: Expo Router 6 (file-based, typed routes, `@/*` → `./src/*`)
 - **State**: Zustand (auth + modals), TanStack React Query (server data), React Context (theming)
 - **Styling**: Tailwind CSS via NativeWind + React Native StyleSheet; Reanimated 4 + Moti for animations
-- **Platforms**: iOS, Android, and Web (React Native Web via Metro bundler)
+- **Platforms**: iOS and Web (React Native Web via Metro bundler). Android is not built/targeted yet, though the RN stack supports adding it later.
 
 ## Development Commands
 
