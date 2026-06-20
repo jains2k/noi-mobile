@@ -26,6 +26,7 @@ import { StatusBar } from "expo-status-bar";
 import { useTheme } from "@/utils/ThemeProvider";
 import { useAuth } from "@/utils/auth/useAuth";
 import { apiFetch } from "@/utils/api";
+import SchedulePicker from "@/components/SchedulePicker";
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
@@ -43,6 +44,25 @@ export default function TasksPage() {
     estimated_time: "",
     status: "active",
   });
+
+  // Calendar scheduling (opt-in). When enabled, the task gets a due_date
+  // (defaults to today) and, if a time is picked, a planned_at for the planner.
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState(new Date());
+  const [scheduleMinutes, setScheduleMinutes] = useState(null);
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      description: "",
+      energy_level: "medium",
+      estimated_time: "",
+      status: "active",
+    });
+    setScheduleEnabled(false);
+    setScheduleDate(new Date());
+    setScheduleMinutes(null);
+  };
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["tasks"],
@@ -96,13 +116,7 @@ export default function TasksPage() {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       setEditingTask(null);
       setIsAdding(false);
-      setFormData({
-        title: "",
-        description: "",
-        energy_level: "medium",
-        estimated_time: "",
-        status: "active",
-      });
+      resetForm();
     },
   });
 
@@ -124,13 +138,7 @@ export default function TasksPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       setIsAdding(false);
-      setFormData({
-        title: "",
-        description: "",
-        energy_level: "medium",
-        estimated_time: "",
-        status: "active",
-      });
+      resetForm();
     },
   });
 
@@ -143,6 +151,19 @@ export default function TasksPage() {
   });
 
   const handleSubmit = () => {
+    let due_date = null;
+    let planned_at = null;
+    if (scheduleEnabled) {
+      const day = new Date(scheduleDate);
+      day.setHours(0, 0, 0, 0);
+      due_date = day.toISOString();
+      if (scheduleMinutes != null) {
+        const dt = new Date(scheduleDate);
+        dt.setHours(Math.floor(scheduleMinutes / 60), scheduleMinutes % 60, 0, 0);
+        planned_at = dt.toISOString();
+      }
+    }
+
     const taskData = {
       title: formData.title,
       description: formData.description || null,
@@ -151,6 +172,8 @@ export default function TasksPage() {
         ? parseInt(formData.estimated_time)
         : null,
       status: formData.status,
+      due_date,
+      planned_at,
     };
 
     if (editingTask) {
@@ -192,7 +215,10 @@ export default function TasksPage() {
 
         {/* Add Button - use themeColors.primary */}
         <TouchableOpacity
-          onPress={() => setIsAdding(true)}
+          onPress={() => {
+            resetForm();
+            setIsAdding(true);
+          }}
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -415,6 +441,27 @@ export default function TasksPage() {
                               task.estimated_time?.toString() || "",
                             status: task.status,
                           });
+                          const hasSchedule = !!(
+                            task.due_date || task.planned_at
+                          );
+                          setScheduleEnabled(hasSchedule);
+                          setScheduleDate(
+                            task.due_date
+                              ? new Date(task.due_date)
+                              : task.planned_at
+                                ? new Date(task.planned_at)
+                                : new Date(),
+                          );
+                          if (task.planned_at) {
+                            const p = new Date(task.planned_at);
+                            const mins = p.getHours() * 60 + p.getMinutes();
+                            // snap to the picker's 10-minute increments
+                            setScheduleMinutes(
+                              Math.min(Math.round(mins / 10) * 10, 1430),
+                            );
+                          } else {
+                            setScheduleMinutes(null);
+                          }
                         }}
                         style={{ padding: 8 }}
                       >
@@ -528,6 +575,7 @@ export default function TasksPage() {
         onRequestClose={() => {
           setIsAdding(false);
           setEditingTask(null);
+          resetForm();
         }}
       >
         <View
@@ -743,6 +791,95 @@ export default function TasksPage() {
                     ))}
                   </View>
                 </View>
+
+                {/* Calendar scheduling (opt-in) */}
+                <View
+                  style={{
+                    borderTopWidth: 1,
+                    borderTopColor: "rgba(243, 244, 246, 0.8)",
+                    paddingTop: 16,
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={() => setScheduleEnabled(!scheduleEnabled)}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                        flex: 1,
+                      }}
+                    >
+                      <Calendar size={18} color={themeColors.primary} />
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "bold",
+                            color: "#374151",
+                          }}
+                        >
+                          add to calendar
+                        </Text>
+                        <Text style={{ fontSize: 11, color: "#9CA3AF" }}>
+                          pick a date, plus an optional time
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        width: 48,
+                        height: 28,
+                        borderRadius: 999,
+                        padding: 3,
+                        backgroundColor: scheduleEnabled
+                          ? themeColors.primary
+                          : "#E5E7EB",
+                        alignItems: scheduleEnabled ? "flex-end" : "flex-start",
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 11,
+                          backgroundColor: "#FFF",
+                        }}
+                      />
+                    </View>
+                  </TouchableOpacity>
+
+                  {scheduleEnabled && (
+                    <View style={{ marginTop: 16, gap: 8 }}>
+                      <SchedulePicker
+                        dateValue={scheduleDate}
+                        onDateChange={setScheduleDate}
+                        minutesValue={scheduleMinutes}
+                        onMinutesChange={setScheduleMinutes}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          color: themeColors.primary,
+                          paddingLeft: 4,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        shows on your calendar
+                        {scheduleMinutes != null
+                          ? " and daily planner"
+                          : ""}
+                        .
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
 
               <View style={{ flexDirection: "row", gap: 12, marginTop: 24 }}>
@@ -750,13 +887,7 @@ export default function TasksPage() {
                   onPress={() => {
                     setIsAdding(false);
                     setEditingTask(null);
-                    setFormData({
-                      title: "",
-                      description: "",
-                      energy_level: "medium",
-                      estimated_time: "",
-                      status: "active",
-                    });
+                    resetForm();
                   }}
                   style={{
                     flex: 1,

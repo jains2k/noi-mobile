@@ -27,10 +27,12 @@ import useUser from "@/utils/auth/useUser";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "@/utils/auth/useAuth";
 import { apiFetch } from "@/utils/api";
+import { useTheme } from "@/utils/ThemeProvider";
 
 export default function Dashboard() {
   const { data: user } = useUser();
   const { isAuthenticated } = useAuth();
+  const { themeColors } = useTheme();
   const queryClient = useQueryClient();
   const [brainDump, setBrainDump] = useState("");
   const [currentEnergy, setCurrentEnergy] = useState("medium");
@@ -216,9 +218,9 @@ export default function Dashboard() {
               marginBottom: 8,
             }}
           >
-            <timeInfo.Icon size={32} color="#A78BFA" />
+            <timeInfo.Icon size={32} color={themeColors.primary} />
             <Text
-              style={{ fontSize: 28, fontWeight: "bold", color: "#A78BFA" }}
+              style={{ fontSize: 28, fontWeight: "bold", color: themeColors.primary }}
             >
               {timeInfo.greeting}, {user?.email?.split("@")[0]}
             </Text>
@@ -258,7 +260,7 @@ export default function Dashboard() {
                   paddingVertical: 4,
                   borderRadius: 999,
                   backgroundColor:
-                    currentEnergy === e ? "#A78BFA" : "rgba(255,255,255,0.5)",
+                    currentEnergy === e ? themeColors.primary : "rgba(255,255,255,0.5)",
                 }}
               >
                 <Text
@@ -283,19 +285,19 @@ export default function Dashboard() {
               padding: 24,
               borderRadius: 24,
               borderWidth: 2,
-              borderColor: "#A78BFA",
+              borderColor: themeColors.primary,
               borderStyle: "dashed",
               flexDirection: "row",
               gap: 16,
             }}
           >
-            <Sparkles size={24} color="#A78BFA" />
+            <Sparkles size={24} color={themeColors.primary} />
             <View style={{ flex: 1 }}>
               <Text
                 style={{
                   fontSize: 12,
                   fontWeight: "600",
-                  color: "#A78BFA",
+                  color: themeColors.primary,
                   marginBottom: 4,
                 }}
               >
@@ -315,7 +317,7 @@ export default function Dashboard() {
             padding: 32,
             borderRadius: 32,
             borderWidth: 2,
-            borderColor: "#A78BFA",
+            borderColor: themeColors.primary,
             alignItems: "center",
             gap: 24,
           }}
@@ -327,7 +329,7 @@ export default function Dashboard() {
               borderRadius: 999,
             }}
           >
-            <Smile size={40} color="#A78BFA" />
+            <Smile size={40} color={themeColors.primary} />
           </View>
           <View style={{ alignItems: "center" }}>
             <Text
@@ -436,7 +438,7 @@ export default function Dashboard() {
             </View>
           ) : null}
           {saveMoodMutation.isLoading && (
-            <ActivityIndicator size="small" color="#A78BFA" />
+            <ActivityIndicator size="small" color={themeColors.primary} />
           )}
         </View>
 
@@ -491,9 +493,9 @@ export default function Dashboard() {
                 paddingHorizontal: 24,
                 paddingVertical: 8,
                 backgroundColor:
-                  brainDump.trim() && !isSorting ? "#A78BFA" : "#D1D5DB",
+                  brainDump.trim() && !isSorting ? themeColors.primary : "#D1D5DB",
                 borderRadius: 16,
-                shadowColor: "#A78BFA",
+                shadowColor: themeColors.primary,
                 shadowOpacity: 0.2,
                 shadowRadius: 10,
                 shadowOffset: { width: 0, height: 4 },
@@ -518,23 +520,14 @@ export default function Dashboard() {
         {/* Active Tasks */}
         <View style={{ gap: 16 }}>
           <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
+            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
           >
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            <CheckSquare size={16} color="#6B7280" />
+            <Text
+              style={{ fontSize: 14, fontWeight: "bold", color: "#374151" }}
             >
-              <CheckSquare size={16} color="#6B7280" />
-              <Text
-                style={{ fontSize: 14, fontWeight: "bold", color: "#374151" }}
-              >
-                active tasks
-              </Text>
-            </View>
-            <Text style={{ fontSize: 12, color: "#A78BFA" }}>view all</Text>
+              active tasks
+            </Text>
           </View>
           <View style={{ gap: 12 }}>
             {activeTasks.length === 0 ? (
