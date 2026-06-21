@@ -477,7 +477,7 @@ export default function Dashboard() {
                 borderRadius: 24,
                 fontSize: 14,
                 color: "#374151",
-                minHeight: 192,
+                height: 200,
               }}
             />
             <TouchableOpacity

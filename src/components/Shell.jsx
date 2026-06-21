@@ -1,4 +1,13 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  Keyboard,
+  TextInput,
+  Platform,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Star,
@@ -11,7 +20,7 @@ import {
   Menu,
   X,
 } from "lucide-react-native";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "expo-router";
 import { useAuth } from "@/utils/auth/useAuth";
 import useUser from "@/utils/auth/useUser";
@@ -25,6 +34,29 @@ export default function Shell({ children }) {
   const { data: user } = useUser();
   const { themeColors, fontFamily } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const scrollRef = useRef(null);
+  const scrollY = useRef(0);
+
+  // Keyboard does not auto-scroll the focused input into view on its own
+  // (automaticallyAdjustKeyboardInsets only adds bottom inset). When the
+  // keyboard appears, measure the focused input and scroll it above the
+  // keyboard so multiline fields like the brain dump stay visible.
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const sub = Keyboard.addListener("keyboardDidShow", (e) => {
+      const focused = TextInput.State.currentlyFocusedInput?.();
+      const sv = scrollRef.current;
+      if (!focused?.measureInWindow || !sv) return;
+      const keyboardTop = e.endCoordinates.screenY;
+      focused.measureInWindow((x, y, width, height) => {
+        const overlap = y + height - keyboardTop + 24; // 24px breathing room
+        if (overlap > 0) {
+          sv.scrollTo({ y: scrollY.current + overlap, animated: true });
+        }
+      });
+    });
+    return () => sub.remove();
+  }, []);
 
   const handleSignOut = async () => {
     setMenuOpen(false);
@@ -80,9 +112,17 @@ export default function Shell({ children }) {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
         showsVerticalScrollIndicator={false}
+        automaticallyAdjustKeyboardInsets={true}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        scrollEventThrottle={16}
+        onScroll={(e) => {
+          scrollY.current = e.nativeEvent.contentOffset.y;
+        }}
       >
         {children}
       </ScrollView>
