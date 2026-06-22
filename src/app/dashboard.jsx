@@ -136,6 +136,7 @@ export default function Dashboard() {
         return;
       }
       if (data.blocked) {
+        setCrisis(null);
         setIsSorting(false);
         Alert.alert("noi can only help with tasks", data.message);
         return;
