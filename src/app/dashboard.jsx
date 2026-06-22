@@ -466,7 +466,7 @@ export default function Dashboard() {
             <TextInput
               value={brainDump}
               onChangeText={setBrainDump}
-              placeholder="what's on your mind? don't worry about order..."
+              placeholder="dump everything you need to do — we'll sort your thoughts into tasks"
               placeholderTextColor="#D1D5DB"
               multiline
               numberOfLines={6}
