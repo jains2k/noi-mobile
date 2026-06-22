@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useState } from "react";
 import Shell from "@/components/Shell";
+import CrisisCard from "@/components/CrisisCard";
 import {
   Sparkles,
   MessageSquare,
@@ -539,6 +540,12 @@ export default function JournalPage() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {dailyInsights && (
+                dailyInsights.crisis ? (
+                  <CrisisCard
+                    message={dailyInsights.reflection}
+                    resources={dailyInsights.action_items}
+                  />
+                ) : (
                 <View style={{ gap: 24 }}>
                   <View
                     style={{
@@ -652,6 +659,7 @@ export default function JournalPage() {
                     </Text>
                   </View>
                 </View>
+                )
               )}
             </ScrollView>
           </View>

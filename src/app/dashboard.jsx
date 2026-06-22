@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useState, useEffect } from "react";
 import Shell from "@/components/Shell";
+import CrisisCard from "@/components/CrisisCard";
 import {
   Sun,
   Moon,
@@ -39,6 +40,7 @@ export default function Dashboard() {
   const [currentMood, setCurrentMood] = useState(3);
   const [suggestion, setSuggestion] = useState("");
   const [isSorting, setIsSorting] = useState(false);
+  const [crisis, setCrisis] = useState(null);
 
   const [timeInfo, setTimeInfo] = useState({ greeting: "", Icon: Sunrise });
   useEffect(() => {
@@ -127,6 +129,18 @@ export default function Dashboard() {
       return res.json();
     },
     onSuccess: async (data) => {
+      if (data.crisis) {
+        setCrisis({ message: data.message, resources: data.resources });
+        setBrainDump("");
+        setIsSorting(false);
+        return;
+      }
+      if (data.blocked) {
+        setIsSorting(false);
+        Alert.alert("noi can only help with tasks", data.message);
+        return;
+      }
+      setCrisis(null);
       try {
         for (const task of data.tasks) {
           await apiFetch("/api/tasks", {
@@ -462,6 +476,9 @@ export default function Dashboard() {
               </Text>
             </View>
           </View>
+          {crisis && (
+            <CrisisCard message={crisis.message} resources={crisis.resources} />
+          )}
           <View style={{ position: "relative" }}>
             <TextInput
               value={brainDump}
