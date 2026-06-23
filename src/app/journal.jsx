@@ -333,7 +333,12 @@ export default function JournalPage() {
               >
                 {entry.content}
               </Text>
-              {entry.ai_reflection && (
+              {entry.crisis ? (
+                <CrisisCard
+                  message={entry.crisis_message}
+                  resources={entry.crisis_resources}
+                />
+              ) : entry.ai_reflection ? (
                 <View
                   style={{
                     backgroundColor: "rgba(167, 139, 250, 0.05)",
@@ -405,7 +410,7 @@ export default function JournalPage() {
                     </View>
                   )}
                 </View>
-              )}
+              ) : null}
             </View>
           ))}
         </View>
