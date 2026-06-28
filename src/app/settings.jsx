@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Palette, Bell, LogOut, Star, Type, Check, Trash2, HelpCircle } from "lucide-react-native";
+import { Palette, Bell, LogOut, Star, Type, Check, Trash2, HelpCircle, ChevronRight, Clock, ListTodo } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/utils/auth/useAuth";
@@ -10,6 +10,14 @@ import { StatusBar } from "expo-status-bar";
 import Shell from "@/components/Shell";
 import { useTheme } from "@/utils/ThemeProvider";
 import { apiFetch } from "@/utils/api";
+import {
+  getNotificationPrefs,
+  saveNotificationPrefs,
+  requestNotificationPermission,
+  checkNotificationPermission,
+  openNotificationSettings,
+  refreshAllNotifications,
+} from "@/utils/notifications";
 
 export default function MobileSettings() {
   const insets = useSafeAreaInsets();
@@ -67,6 +75,54 @@ export default function MobileSettings() {
 
   const [taskReminders, setTaskReminders] = useState(true);
   const [moodCheckins, setMoodCheckins] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState({
+    taskReminders: false,
+    taskReminderMinutes: 10,
+    todoReminders: false,
+    todoStartHour: 9,
+    todoIntervalHours: 3,
+  });
+  const [hasNotifPermission, setHasNotifPermission] = useState(false);
+
+  useEffect(() => {
+    getNotificationPrefs().then(setNotifPrefs);
+    checkNotificationPermission().then(setHasNotifPermission);
+  }, []);
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: async () => {
+      const res = await apiFetch("/api/tasks");
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!isAuthenticated,
+  });
+
+  const updateNotifPref = async (key, value) => {
+    const updated = { ...notifPrefs, [key]: value };
+    setNotifPrefs(updated);
+    await saveNotificationPrefs(updated);
+    if (updated.taskReminders || updated.todoReminders) {
+      await refreshAllNotifications(tasks);
+    }
+  };
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setHasNotifPermission(granted);
+    if (!granted) {
+      Alert.alert(
+        "notifications disabled",
+        "to get reminders, you need to enable notifications for noi in your device settings.",
+        [
+          { text: "cancel", style: "cancel" },
+          { text: "open settings", onPress: openNotificationSettings },
+        ]
+      );
+    }
+    return granted;
+  };
 
   useEffect(() => {
     if (settings) {
@@ -293,7 +349,7 @@ export default function MobileSettings() {
             </View>
           </View>
 
-          {/* Notifications Section - with same styling */}
+          {/* Notifications Section */}
           <View
             style={{
               backgroundColor: "rgba(255, 255, 255, 0.4)",
@@ -305,130 +361,262 @@ export default function MobileSettings() {
               gap: 20,
             }}
           >
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
-            >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <Bell size={20} color={themeColors.primary} />
-              <Text
-                style={{ fontSize: 16, fontWeight: "bold", color: "#374151" }}
-              >
+              <Text style={{ fontSize: 16, fontWeight: "bold", color: "#374151" }}>
                 notifications & reminders
               </Text>
             </View>
 
-            <View style={{ gap: 24 }}>
-              <View
+            {/* Permission banner */}
+            {!hasNotifPermission && (
+              <TouchableOpacity
+                onPress={handleEnableNotifications}
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  backgroundColor: `${themeColors.primary}15`,
                   padding: 16,
-                  backgroundColor: "rgba(255, 255, 255, 0.4)",
                   borderRadius: 16,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
                 }}
               >
+                <Bell size={18} color={themeColors.primary} />
                 <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "bold",
-                      color: "#374151",
-                      marginBottom: 2,
-                    }}
-                  >
-                    task reminders
+                  <Text style={{ fontSize: 13, fontWeight: "bold", color: themeColors.primary }}>
+                    enable notifications
                   </Text>
-                  <Text style={{ fontSize: 12, color: "#6B7280" }}>
-                    get a nudge 5 minutes before tasks begin.
+                  <Text style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
+                    tap to allow noi to send you gentle reminders
                   </Text>
                 </View>
+                <ChevronRight size={16} color={themeColors.primary} />
+              </TouchableOpacity>
+            )}
+
+            <View style={{ gap: 24 }}>
+              {/* Task Reminders */}
+              <View style={{ gap: 12 }}>
                 <View
                   style={{
-                    width: 48,
-                    height: 24,
-                    borderRadius: 12,
-                    backgroundColor: taskReminders
-                      ? themeColors.primary
-                      : "#D1D5DB",
-                    padding: 2,
-                    justifyContent: "center",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: 16,
+                    backgroundColor: "rgba(255, 255, 255, 0.4)",
+                    borderRadius: 16,
                   }}
                 >
-                  <TouchableOpacity
-                    onPress={() => {
-                      const newValue = !taskReminders;
-                      setTaskReminders(newValue);
-                      updateSettingsMutation.mutate({
-                        task_reminders: newValue,
-                      });
-                    }}
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                      <Clock size={14} color="#374151" />
+                      <Text style={{ fontSize: 14, fontWeight: "bold", color: "#374151" }}>
+                        task reminders
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 12, color: "#6B7280" }}>
+                      get a nudge before scheduled tasks begin
+                    </Text>
+                  </View>
+                  <View
                     style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 8,
-                      backgroundColor: "#FFF",
-                      alignSelf: taskReminders ? "flex-end" : "flex-start",
+                      width: 48,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: notifPrefs.taskReminders ? themeColors.primary : "#D1D5DB",
+                      padding: 2,
+                      justifyContent: "center",
                     }}
-                  />
+                  >
+                    <TouchableOpacity
+                      onPress={async () => {
+                        if (!notifPrefs.taskReminders && !hasNotifPermission) {
+                          const granted = await handleEnableNotifications();
+                          if (!granted) return;
+                        }
+                        updateNotifPref("taskReminders", !notifPrefs.taskReminders);
+                      }}
+                      style={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: 8,
+                        backgroundColor: "#FFF",
+                        alignSelf: notifPrefs.taskReminders ? "flex-end" : "flex-start",
+                      }}
+                    />
+                  </View>
                 </View>
+
+                {/* Minutes before picker */}
+                {notifPrefs.taskReminders && (
+                  <View style={{ paddingHorizontal: 8 }}>
+                    <Text style={{ fontSize: 11, fontWeight: "bold", color: "#9CA3AF", marginBottom: 8, paddingLeft: 4 }}>
+                      remind me this many minutes before:
+                    </Text>
+                    <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+                      {[5, 10, 15, 30, 60].map((mins) => (
+                        <TouchableOpacity
+                          key={mins}
+                          onPress={() => updateNotifPref("taskReminderMinutes", mins)}
+                          style={{
+                            paddingHorizontal: 14,
+                            paddingVertical: 8,
+                            borderRadius: 12,
+                            backgroundColor: notifPrefs.taskReminderMinutes === mins ? themeColors.primary : "rgba(255,255,255,0.4)",
+                          }}
+                        >
+                          <Text style={{
+                            fontSize: 12,
+                            fontWeight: "bold",
+                            color: notifPrefs.taskReminderMinutes === mins ? "#FFF" : "#6B7280",
+                          }}>
+                            {mins < 60 ? `${mins} min` : "1 hour"}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
               </View>
 
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: 16,
-                  backgroundColor: "rgba(255, 255, 255, 0.4)",
-                  borderRadius: 16,
-                }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "bold",
-                      color: "#374151",
-                      marginBottom: 2,
-                    }}
-                  >
-                    mood check-ins
-                  </Text>
-                  <Text style={{ fontSize: 12, color: "#6B7280" }}>
-                    gentle reminders every 3 hours to see how you are.
-                  </Text>
-                </View>
+              {/* To-Do List Reminders */}
+              <View style={{ gap: 12 }}>
                 <View
                   style={{
-                    width: 48,
-                    height: 24,
-                    borderRadius: 12,
-                    backgroundColor: moodCheckins
-                      ? themeColors.primary
-                      : "#D1D5DB",
-                    padding: 2,
-                    justifyContent: "center",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: 16,
+                    backgroundColor: "rgba(255, 255, 255, 0.4)",
+                    borderRadius: 16,
                   }}
                 >
-                  <TouchableOpacity
-                    onPress={() => {
-                      const newValue = !moodCheckins;
-                      setMoodCheckins(newValue);
-                      updateSettingsMutation.mutate({
-                        mood_checkins: newValue,
-                      });
-                    }}
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                      <ListTodo size={14} color="#374151" />
+                      <Text style={{ fontSize: 14, fontWeight: "bold", color: "#374151" }}>
+                        to-do list reminders
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 12, color: "#6B7280" }}>
+                      periodic nudges to plan and review your tasks
+                    </Text>
+                  </View>
+                  <View
                     style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 8,
-                      backgroundColor: "#FFF",
-                      alignSelf: moodCheckins ? "flex-end" : "flex-start",
+                      width: 48,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: notifPrefs.todoReminders ? themeColors.primary : "#D1D5DB",
+                      padding: 2,
+                      justifyContent: "center",
                     }}
-                  />
+                  >
+                    <TouchableOpacity
+                      onPress={async () => {
+                        if (!notifPrefs.todoReminders && !hasNotifPermission) {
+                          const granted = await handleEnableNotifications();
+                          if (!granted) return;
+                        }
+                        updateNotifPref("todoReminders", !notifPrefs.todoReminders);
+                      }}
+                      style={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: 8,
+                        backgroundColor: "#FFF",
+                        alignSelf: notifPrefs.todoReminders ? "flex-end" : "flex-start",
+                      }}
+                    />
+                  </View>
                 </View>
+
+                {notifPrefs.todoReminders && (
+                  <View style={{ paddingHorizontal: 8, gap: 16 }}>
+                    {/* Start time */}
+                    <View>
+                      <Text style={{ fontSize: 11, fontWeight: "bold", color: "#9CA3AF", marginBottom: 8, paddingLeft: 4 }}>
+                        start reminders at:
+                      </Text>
+                      <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+                        {[7, 8, 9, 10, 11].map((h) => (
+                          <TouchableOpacity
+                            key={h}
+                            onPress={() => updateNotifPref("todoStartHour", h)}
+                            style={{
+                              paddingHorizontal: 14,
+                              paddingVertical: 8,
+                              borderRadius: 12,
+                              backgroundColor: notifPrefs.todoStartHour === h ? themeColors.primary : "rgba(255,255,255,0.4)",
+                            }}
+                          >
+                            <Text style={{
+                              fontSize: 12,
+                              fontWeight: "bold",
+                              color: notifPrefs.todoStartHour === h ? "#FFF" : "#6B7280",
+                            }}>
+                              {h > 12 ? h - 12 : h} {h >= 12 ? "pm" : "am"}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Interval */}
+                    <View>
+                      <Text style={{ fontSize: 11, fontWeight: "bold", color: "#9CA3AF", marginBottom: 8, paddingLeft: 4 }}>
+                        remind me every:
+                      </Text>
+                      <View style={{ flexDirection: "row", gap: 6 }}>
+                        {[2, 3, 4].map((hrs) => (
+                          <TouchableOpacity
+                            key={hrs}
+                            onPress={() => updateNotifPref("todoIntervalHours", hrs)}
+                            style={{
+                              paddingHorizontal: 14,
+                              paddingVertical: 8,
+                              borderRadius: 12,
+                              backgroundColor: notifPrefs.todoIntervalHours === hrs ? themeColors.primary : "rgba(255,255,255,0.4)",
+                            }}
+                          >
+                            <Text style={{
+                              fontSize: 12,
+                              fontWeight: "bold",
+                              color: notifPrefs.todoIntervalHours === hrs ? "#FFF" : "#6B7280",
+                            }}>
+                              {hrs} hours
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Preview */}
+                    <View style={{ backgroundColor: `${themeColors.primary}10`, padding: 12, borderRadius: 12 }}>
+                      <Text style={{ fontSize: 11, color: themeColors.primary, fontWeight: "600" }}>
+                        you'll get reminders at:{" "}
+                        {Array.from({ length: 5 }, (_, i) => {
+                          const h = notifPrefs.todoStartHour + i * notifPrefs.todoIntervalHours;
+                          if (h > 21) return null;
+                          return `${h > 12 ? h - 12 : h}${h >= 12 ? "pm" : "am"}`;
+                        }).filter(Boolean).join(", ")}
+                      </Text>
+                    </View>
+                  </View>
+                )}
               </View>
             </View>
+
+            {/* Open device settings link */}
+            {hasNotifPermission && (
+              <TouchableOpacity
+                onPress={openNotificationSettings}
+                style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingTop: 4 }}
+              >
+                <Text style={{ fontSize: 12, color: "#9CA3AF" }}>manage in device settings</Text>
+                <ChevronRight size={12} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Help & Support */}
