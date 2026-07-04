@@ -5,22 +5,11 @@ This test suite verifies critical functionality of the noi mobile app to prevent
 
 ## Test Files
 
-### `api.test.js`
-Tests the `apiFetch` helper function that handles all API communication:
-- ✅ Includes credentials for cookie-based authentication
-- ✅ Sets proper Content-Type headers
-- ✅ Handles POST/PUT/DELETE requests correctly
-- ✅ Gracefully handles network errors
-- ✅ Allows custom header overrides
-
-### `integration.test.js`
-End-to-end tests for user flows:
-- ✅ Theme switching updates UI colors and persists
-- ✅ Task creation, completion, and filtering
-- ✅ Settings persistence (notifications, fonts)
-- ✅ Authentication state management
-- ✅ Mood tracking with 3-hour cooldown
-- ✅ AI features (magic sort, journal reflection)
+The repository currently contains focused tests alongside the implementation
+areas they cover. Run `git ls-files '*test*'` to see the authoritative list.
+Notification scheduling tests cover preference persistence, task filtering,
+recurring reminder definitions, reconciliation, cancellation, and failure
+handling.
 
 ## Running Tests
 

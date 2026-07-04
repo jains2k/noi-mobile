@@ -3,7 +3,8 @@ import { Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Palette, Bell, LogOut, Star, Type, Check, Trash2, HelpCircle, ChevronRight, Clock, ListTodo } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/utils/auth/useAuth";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -16,13 +17,15 @@ import {
   requestNotificationPermission,
   checkNotificationPermission,
   openNotificationSettings,
-  refreshAllNotifications,
+  reconcileNotifications,
+  scheduleTestNotification,
 } from "@/utils/notifications";
 
 export default function MobileSettings() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { signOut, isAuthenticated } = useAuth();
+  const { signOut, isAuthenticated, auth } = useAuth();
+  const userId = auth?.user?.id;
   const { themeColors } = useTheme();
   const router = useRouter();
 
@@ -83,11 +86,26 @@ export default function MobileSettings() {
     todoIntervalHours: 3,
   });
   const [hasNotifPermission, setHasNotifPermission] = useState(false);
+  const notificationUpdateRef = useRef(false);
 
   useEffect(() => {
-    getNotificationPrefs().then(setNotifPrefs);
-    checkNotificationPermission().then(setHasNotifPermission);
-  }, []);
+    if (!userId) return;
+    getNotificationPrefs(userId).then(setNotifPrefs).catch((error) => {
+      console.error("Failed to load notification preferences:", error);
+    });
+  }, [userId]);
+
+  // Permission may be changed in iOS Settings while this screen is backgrounded.
+  useFocusEffect(
+    useCallback(() => {
+      checkNotificationPermission()
+        .then(setHasNotifPermission)
+        .catch((error) => {
+          console.error("Failed to check notification permission:", error);
+          setHasNotifPermission(false);
+        });
+    }, []),
+  );
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["tasks"],
@@ -100,18 +118,41 @@ export default function MobileSettings() {
   });
 
   const updateNotifPref = async (key, value) => {
+    if (!userId || notificationUpdateRef.current) return;
+    notificationUpdateRef.current = true;
+    const previous = notifPrefs;
     const updated = { ...notifPrefs, [key]: value };
     setNotifPrefs(updated);
-    await saveNotificationPrefs(updated);
-    if (updated.taskReminders || updated.todoReminders) {
-      await refreshAllNotifications(tasks);
+    try {
+      await saveNotificationPrefs(updated, userId);
+      await reconcileNotifications(tasks, { userId, prefs: updated });
+    } catch (error) {
+      console.error("Failed to update notification preferences:", error);
+      setNotifPrefs(previous);
+      try {
+        await saveNotificationPrefs(previous, userId);
+        await reconcileNotifications(tasks, { userId, prefs: previous });
+      } catch (rollbackError) {
+        console.error("Failed to restore notification preferences:", rollbackError);
+      }
+      Alert.alert(
+        "couldn't update reminders",
+        "your previous reminder settings were restored. please try again.",
+      );
+    } finally {
+      notificationUpdateRef.current = false;
     }
   };
 
   const handleEnableNotifications = async () => {
-    const granted = await requestNotificationPermission();
-    setHasNotifPermission(granted);
-    if (!granted) {
+    try {
+      const granted = await requestNotificationPermission();
+      setHasNotifPermission(granted);
+      if (granted && userId) {
+        await reconcileNotifications(tasks, { userId, prefs: notifPrefs });
+      }
+      if (granted) return true;
+
       Alert.alert(
         "notifications disabled",
         "to get reminders, you need to enable notifications for noi in your device settings.",
@@ -120,8 +161,36 @@ export default function MobileSettings() {
           { text: "open settings", onPress: openNotificationSettings },
         ]
       );
+      return false;
+    } catch (error) {
+      console.error("Failed to request notification permission:", error);
+      Alert.alert(
+        "couldn't enable notifications",
+        "please try again or enable notifications for noi in iOS Settings.",
+      );
+      return false;
     }
-    return granted;
+  };
+
+  const handleTestNotification = async () => {
+    try {
+      const scheduled = await scheduleTestNotification();
+      setHasNotifPermission(scheduled);
+      if (!scheduled) {
+        await handleEnableNotifications();
+        return;
+      }
+      Alert.alert(
+        "test reminder scheduled",
+        "dismiss this message. a notification should appear in about 8 seconds, even while noi is open.",
+      );
+    } catch (error) {
+      console.error("Failed to schedule test notification:", error);
+      Alert.alert(
+        "couldn't schedule test reminder",
+        "check notification permission in iOS Settings and try again.",
+      );
+    }
   };
 
   useEffect(() => {
@@ -394,6 +463,22 @@ export default function MobileSettings() {
               </TouchableOpacity>
             )}
 
+            <TouchableOpacity
+              onPress={handleTestNotification}
+              style={{
+                paddingVertical: 10,
+                paddingHorizontal: 14,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: themeColors.primary,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: "bold", color: themeColors.primary }}>
+                send test notification
+              </Text>
+            </TouchableOpacity>
+
             <View style={{ gap: 24 }}>
               {/* Task Reminders */}
               <View style={{ gap: 12 }}>
@@ -418,7 +503,16 @@ export default function MobileSettings() {
                       get a nudge before scheduled tasks begin
                     </Text>
                   </View>
-                  <View
+                  <TouchableOpacity
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: notifPrefs.taskReminders }}
+                    onPress={async () => {
+                      if (!notifPrefs.taskReminders && !hasNotifPermission) {
+                        const granted = await handleEnableNotifications();
+                        if (!granted) return;
+                      }
+                      updateNotifPref("taskReminders", !notifPrefs.taskReminders);
+                    }}
                     style={{
                       width: 48,
                       height: 24,
@@ -428,14 +522,7 @@ export default function MobileSettings() {
                       justifyContent: "center",
                     }}
                   >
-                    <TouchableOpacity
-                      onPress={async () => {
-                        if (!notifPrefs.taskReminders && !hasNotifPermission) {
-                          const granted = await handleEnableNotifications();
-                          if (!granted) return;
-                        }
-                        updateNotifPref("taskReminders", !notifPrefs.taskReminders);
-                      }}
+                    <View
                       style={{
                         width: 16,
                         height: 16,
@@ -444,7 +531,7 @@ export default function MobileSettings() {
                         alignSelf: notifPrefs.taskReminders ? "flex-end" : "flex-start",
                       }}
                     />
-                  </View>
+                  </TouchableOpacity>
                 </View>
 
                 {/* Minutes before picker */}
@@ -479,7 +566,7 @@ export default function MobileSettings() {
                 )}
               </View>
 
-              {/* To-Do List Reminders */}
+              {/* Planning Reminders */}
               <View style={{ gap: 12 }}>
                 <View
                   style={{
@@ -495,14 +582,23 @@ export default function MobileSettings() {
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 }}>
                       <ListTodo size={14} color="#374151" />
                       <Text style={{ fontSize: 14, fontWeight: "bold", color: "#374151" }}>
-                        to-do list reminders
+                        planning reminders
                       </Text>
                     </View>
                     <Text style={{ fontSize: 12, color: "#6B7280" }}>
                       periodic nudges to plan and review your tasks
                     </Text>
                   </View>
-                  <View
+                  <TouchableOpacity
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: notifPrefs.todoReminders }}
+                    onPress={async () => {
+                      if (!notifPrefs.todoReminders && !hasNotifPermission) {
+                        const granted = await handleEnableNotifications();
+                        if (!granted) return;
+                      }
+                      updateNotifPref("todoReminders", !notifPrefs.todoReminders);
+                    }}
                     style={{
                       width: 48,
                       height: 24,
@@ -512,14 +608,7 @@ export default function MobileSettings() {
                       justifyContent: "center",
                     }}
                   >
-                    <TouchableOpacity
-                      onPress={async () => {
-                        if (!notifPrefs.todoReminders && !hasNotifPermission) {
-                          const granted = await handleEnableNotifications();
-                          if (!granted) return;
-                        }
-                        updateNotifPref("todoReminders", !notifPrefs.todoReminders);
-                      }}
+                    <View
                       style={{
                         width: 16,
                         height: 16,
@@ -528,7 +617,7 @@ export default function MobileSettings() {
                         alignSelf: notifPrefs.todoReminders ? "flex-end" : "flex-start",
                       }}
                     />
-                  </View>
+                  </TouchableOpacity>
                 </View>
 
                 {notifPrefs.todoReminders && (

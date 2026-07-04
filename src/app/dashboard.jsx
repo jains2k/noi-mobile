@@ -7,8 +7,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useState, useEffect, useRef } from "react";
-import { refreshAllNotifications } from "@/utils/notifications";
+import { useState, useEffect } from "react";
 import Shell from "@/components/Shell";
 import CrisisCard from "@/components/CrisisCard";
 import {
@@ -67,14 +66,6 @@ export default function Dashboard() {
     enabled: !!isAuthenticated,
     retry: false,
   });
-
-  const notifRefreshed = useRef(false);
-  useEffect(() => {
-    if (tasks.length > 0 && !notifRefreshed.current) {
-      notifRefreshed.current = true;
-      refreshAllNotifications(tasks).catch(() => {});
-    }
-  }, [tasks]);
 
   const { data: moodLogs = [] } = useQuery({
     queryKey: ["moods"],
