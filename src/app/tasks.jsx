@@ -5,10 +5,11 @@ import {
   ScrollView,
   Modal,
   TextInput,
-  Pressable,
-  PanResponder,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Shell from "@/components/Shell";
 import {
   Plus,
@@ -21,6 +22,7 @@ import {
   Circle,
   Coffee,
   Star,
+  X,
 } from "lucide-react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -29,7 +31,6 @@ import { useTheme } from "@/utils/ThemeProvider";
 import { useAuth } from "@/utils/auth/useAuth";
 import { apiFetch } from "@/utils/api";
 import SchedulePicker from "@/components/SchedulePicker";
-import { shouldDismissBottomSheetGesture } from "@/utils/bottomSheetGestures";
 import {
   ENERGY_LEVELS,
   energyLabelTextProps,
@@ -37,6 +38,7 @@ import {
 } from "@/utils/energyLevels";
 
 export default function TasksPage() {
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { themeColors, fontFamily } = useTheme();
   const { isAuthenticated } = useAuth();
@@ -64,18 +66,6 @@ export default function TasksPage() {
     setEditingTask(null);
     resetForm();
   };
-
-  const sheetPanResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dy) > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
-        onPanResponderRelease: (_, gestureState) => {
-          if (shouldDismissBottomSheetGesture(gestureState)) closeTaskSheet();
-        },
-      }),
-    [],
-  );
 
   const resetForm = () => {
     setFormData({
@@ -596,66 +586,72 @@ export default function TasksPage() {
         </View>
       </View>
 
-      {/* Add/Edit Modal */}
+      {/* Add/Edit Task — full-screen slide-up */}
       <Modal
         visible={isAdding || editingTask !== null}
         animationType="slide"
-        transparent={true}
+        transparent={false}
         onRequestClose={closeTaskSheet}
       >
-        <Pressable
-          onPress={closeTaskSheet}
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.2)",
-            justifyContent: "flex-end",
-          }}
-        >
-          <Pressable
-            onPress={(event) => event.stopPropagation()}
+        <View style={{ flex: 1, backgroundColor: themeColors.bg1 }}>
+          {/* Header */}
+          <View
             style={{
-              backgroundColor: "#FFF",
-              borderTopLeftRadius: 32,
-              borderTopRightRadius: 32,
-              padding: 24,
-              maxHeight: "90%",
+              paddingTop: insets.top + 8,
+              paddingHorizontal: 20,
+              paddingBottom: 16,
+              backgroundColor: "rgba(255, 255, 255, 0.5)",
+              borderBottomWidth: 1,
+              borderBottomColor: "rgba(0,0,0,0.06)",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            <View
-              {...sheetPanResponder.panHandlers}
-              accessibilityRole="button"
-              accessibilityLabel="Drag down to close task editor"
-              style={{ alignItems: "center", paddingBottom: 12 }}
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: "bold",
+                color: "#1F2937",
+                fontFamily,
+              }}
             >
-              <View
-                style={{
-                  width: 42,
-                  height: 5,
-                  borderRadius: 999,
-                  backgroundColor: "#D1D5DB",
-                }}
-              />
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text
-                style={{
-                  fontSize: 20,
-                  fontWeight: "bold",
-                  color: "#1F2937",
-                  marginBottom: 16,
-                }}
-              >
-                {editingTask ? "edit task" : "new task"}
-              </Text>
+              {editingTask ? "edit task" : "new task"}
+            </Text>
+            <TouchableOpacity
+              onPress={closeTaskSheet}
+              hitSlop={12}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: "rgba(0,0,0,0.07)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <X size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
 
-              <View style={{ gap: 16 }}>
-                <View>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+          >
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ padding: 24, gap: 20 }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={{ gap: 20 }}>
+                <View style={{ gap: 6 }}>
                   <Text
                     style={{
                       fontSize: 12,
                       fontWeight: "bold",
                       color: "#6B7280",
-                      marginBottom: 6,
+                      fontFamily,
                     }}
                   >
                     task title
@@ -667,23 +663,25 @@ export default function TasksPage() {
                     }
                     placeholder="e.g. water the plants"
                     placeholderTextColor="#D1D5DB"
+                    autoFocus
                     style={{
-                      backgroundColor: "rgba(255, 255, 255, 0.4)",
-                      padding: 12,
-                      borderRadius: 12,
-                      fontSize: 14,
+                      backgroundColor: "rgba(255, 255, 255, 0.6)",
+                      padding: 14,
+                      borderRadius: 14,
+                      fontSize: 16,
                       color: "#374151",
+                      fontFamily,
                     }}
                   />
                 </View>
 
-                <View>
+                <View style={{ gap: 6 }}>
                   <Text
                     style={{
                       fontSize: 12,
                       fontWeight: "bold",
                       color: "#6B7280",
-                      marginBottom: 6,
+                      fontFamily,
                     }}
                   >
                     description (optional)
@@ -696,27 +694,28 @@ export default function TasksPage() {
                     placeholder="add notes..."
                     placeholderTextColor="#D1D5DB"
                     multiline
-                    numberOfLines={2}
+                    numberOfLines={3}
                     textAlignVertical="top"
                     style={{
-                      backgroundColor: "rgba(255, 255, 255, 0.4)",
-                      padding: 12,
-                      borderRadius: 12,
+                      backgroundColor: "rgba(255, 255, 255, 0.6)",
+                      padding: 14,
+                      borderRadius: 14,
                       fontSize: 14,
                       color: "#374151",
-                      minHeight: 60,
+                      minHeight: 80,
+                      fontFamily,
                     }}
                   />
                 </View>
 
                 <View style={{ flexDirection: "row", gap: 12 }}>
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 1, gap: 6 }}>
                     <Text
                       style={{
                         fontSize: 12,
                         fontWeight: "bold",
                         color: "#6B7280",
-                        marginBottom: 6,
+                        fontFamily,
                       }}
                     >
                       energy
@@ -730,13 +729,13 @@ export default function TasksPage() {
                           }
                           style={{
                             flex: getEnergyOptionFlex(e),
-                            paddingVertical: 8,
+                            paddingVertical: 10,
                             paddingHorizontal: 2,
-                            borderRadius: 8,
+                            borderRadius: 10,
                             backgroundColor:
                               formData.energy_level === e
                                 ? themeColors.primary
-                                : "rgba(255,255,255,0.4)",
+                                : "rgba(255,255,255,0.6)",
                             alignItems: "center",
                           }}
                         >
@@ -746,9 +745,8 @@ export default function TasksPage() {
                               fontSize: 11,
                               fontWeight: "bold",
                               color:
-                                formData.energy_level === e
-                                  ? "#FFF"
-                                  : "#9CA3AF",
+                                formData.energy_level === e ? "#FFF" : "#9CA3AF",
+                              fontFamily,
                             }}
                           >
                             {e}
@@ -758,13 +756,13 @@ export default function TasksPage() {
                     </View>
                   </View>
 
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 1, gap: 6 }}>
                     <Text
                       style={{
                         fontSize: 12,
                         fontWeight: "bold",
                         color: "#6B7280",
-                        marginBottom: 6,
+                        fontFamily,
                       }}
                     >
                       time (mins)
@@ -778,32 +776,33 @@ export default function TasksPage() {
                       placeholderTextColor="#D1D5DB"
                       keyboardType="numeric"
                       style={{
-                        backgroundColor: "rgba(255, 255, 255, 0.4)",
-                        padding: 12,
-                        borderRadius: 12,
+                        backgroundColor: "rgba(255, 255, 255, 0.6)",
+                        padding: 14,
+                        borderRadius: 14,
                         fontSize: 14,
                         color: "#374151",
+                        fontFamily,
                       }}
                     />
                   </View>
                 </View>
 
-                <View>
+                <View style={{ gap: 6 }}>
                   <Text
                     style={{
                       fontSize: 12,
                       fontWeight: "bold",
                       color: "#6B7280",
-                      marginBottom: 6,
+                      fontFamily,
                     }}
                   >
                     status
                   </Text>
-                  <View style={{ flexDirection: "row", gap: 4 }}>
+                  <View style={{ flexDirection: "row", gap: 6 }}>
                     {[
                       { label: "active", value: "active" },
                       { label: "maybe later", value: "maybe later" },
-                      { label: "completed", value: "completed" },
+                      { label: "done", value: "completed" },
                     ].map((s) => (
                       <TouchableOpacity
                         key={s.value}
@@ -812,21 +811,22 @@ export default function TasksPage() {
                         }
                         style={{
                           flex: 1,
-                          paddingVertical: 8,
-                          borderRadius: 8,
+                          paddingVertical: 10,
+                          borderRadius: 10,
                           backgroundColor:
                             formData.status === s.value
                               ? themeColors.primary
-                              : "rgba(255,255,255,0.4)",
+                              : "rgba(255,255,255,0.6)",
                           alignItems: "center",
                         }}
                       >
                         <Text
                           style={{
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: "bold",
                             color:
                               formData.status === s.value ? "#FFF" : "#9CA3AF",
+                            fontFamily,
                           }}
                         >
                           {s.label}
@@ -840,8 +840,9 @@ export default function TasksPage() {
                 <View
                   style={{
                     borderTopWidth: 1,
-                    borderTopColor: "rgba(243, 244, 246, 0.8)",
-                    paddingTop: 16,
+                    borderTopColor: "rgba(0,0,0,0.06)",
+                    paddingTop: 20,
+                    gap: 16,
                   }}
                 >
                   <TouchableOpacity
@@ -856,51 +857,57 @@ export default function TasksPage() {
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
-                        gap: 8,
+                        gap: 10,
                         flex: 1,
                       }}
                     >
-                      <Calendar size={18} color={themeColors.primary} />
+                      <Calendar size={20} color={themeColors.primary} />
                       <View style={{ flex: 1 }}>
                         <Text
                           style={{
-                            fontSize: 14,
+                            fontSize: 15,
                             fontWeight: "bold",
                             color: "#374151",
+                            fontFamily,
                           }}
                         >
                           add to calendar
                         </Text>
-                        <Text style={{ fontSize: 11, color: "#9CA3AF" }}>
-                          pick a date, plus an optional time
+                        <Text style={{ fontSize: 12, color: "#9CA3AF", fontFamily }}>
+                          pick a date and optional time
                         </Text>
                       </View>
                     </View>
                     <View
                       style={{
-                        width: 48,
-                        height: 28,
+                        width: 50,
+                        height: 30,
                         borderRadius: 999,
                         padding: 3,
                         backgroundColor: scheduleEnabled
                           ? themeColors.primary
                           : "#E5E7EB",
                         alignItems: scheduleEnabled ? "flex-end" : "flex-start",
+                        justifyContent: "center",
                       }}
                     >
                       <View
                         style={{
-                          width: 22,
-                          height: 22,
-                          borderRadius: 11,
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
                           backgroundColor: "#FFF",
+                          shadowColor: "#000",
+                          shadowOpacity: 0.1,
+                          shadowRadius: 4,
+                          shadowOffset: { width: 0, height: 1 },
                         }}
                       />
                     </View>
                   </TouchableOpacity>
 
                   {scheduleEnabled && (
-                    <View style={{ marginTop: 16, gap: 8 }}>
+                    <View style={{ gap: 10 }}>
                       <SchedulePicker
                         dateValue={scheduleDate}
                         onDateChange={setScheduleDate}
@@ -909,67 +916,62 @@ export default function TasksPage() {
                       />
                       <Text
                         style={{
-                          fontSize: 11,
+                          fontSize: 12,
                           color: themeColors.primary,
-                          paddingLeft: 4,
                           fontWeight: "bold",
+                          fontFamily,
                         }}
                       >
                         shows on your calendar
-                        {scheduleMinutes != null
-                          ? " and daily planner"
-                          : ""}
-                        .
+                        {scheduleMinutes != null ? " and daily planner" : ""}.
                       </Text>
                     </View>
                   )}
                 </View>
               </View>
-
-              <View style={{ flexDirection: "row", gap: 12, marginTop: 24 }}>
-                <TouchableOpacity
-                  onPress={closeTaskSheet}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    backgroundColor: "rgba(255, 255, 255, 0.4)",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "bold",
-                      color: "#6B7280",
-                    }}
-                  >
-                    cancel
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleSubmit}
-                  disabled={!formData.title.trim()}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    backgroundColor: formData.title.trim()
-                      ? themeColors.primary
-                      : "#D1D5DB",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text
-                    style={{ fontSize: 14, fontWeight: "bold", color: "#FFF" }}
-                  >
-                    {editingTask ? "save" : "create"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
             </ScrollView>
-          </Pressable>
-        </Pressable>
+
+            {/* Save button — pinned to bottom */}
+            <View
+              style={{
+                paddingHorizontal: 24,
+                paddingTop: 12,
+                paddingBottom: insets.bottom + 24,
+                backgroundColor: "rgba(255,255,255,0.95)",
+                borderTopWidth: 1,
+                borderTopColor: "rgba(0,0,0,0.06)",
+              }}
+            >
+              <TouchableOpacity
+                onPress={handleSubmit}
+                disabled={!formData.title.trim()}
+                style={{
+                  paddingVertical: 16,
+                  borderRadius: 16,
+                  backgroundColor: formData.title.trim()
+                    ? themeColors.primary
+                    : "#E5E7EB",
+                  alignItems: "center",
+                  shadowColor: themeColors.primary,
+                  shadowOpacity: formData.title.trim() ? 0.3 : 0,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 4 },
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    color: formData.title.trim() ? "#FFF" : "#9CA3AF",
+                    fontFamily,
+                  }}
+                >
+                  {editingTask ? "save changes" : "create task"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
     </Shell>
   );

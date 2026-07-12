@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, ScrollView, TextInput, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Shell from "@/components/Shell";
 import {
   Calendar as CalendarIcon,
@@ -36,6 +37,7 @@ import {
 } from "@/utils/energyLevels";
 
 export default function CalendarPage() {
+  const { top: useSafeAreaTopInsets, bottom: useSafeAreaBottomInsets } = useSafeAreaInsets();
   const { themeColors } = useTheme();
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
@@ -528,45 +530,78 @@ export default function CalendarPage() {
         </View>
       </ScrollView>
 
-      {/* Add Task Modal */}
-      <Modal visible={showAddTask} transparent animationType="fade">
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={closeAddTask}
-            style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.2)", justifyContent: "center", alignItems: "center", padding: 20 }}
+      {/* Add Task — full-screen slide-up */}
+      <Modal
+        visible={showAddTask}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={closeAddTask}
+      >
+        <View style={{ flex: 1, backgroundColor: themeColors.bg1 }}>
+          {/* Header */}
+          <View
+            style={{
+              paddingTop: (useSafeAreaTopInsets ?? 44) + 8,
+              paddingHorizontal: 20,
+              paddingBottom: 16,
+              backgroundColor: "rgba(255,255,255,0.5)",
+              borderBottomWidth: 1,
+              borderBottomColor: "rgba(0,0,0,0.06)",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
           >
-            <TouchableOpacity activeOpacity={1} onPress={() => {}} style={{ width: "100%", maxWidth: 400 }}>
-              <View style={{ backgroundColor: "#FFF", borderRadius: 32, padding: 24, gap: 20, shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 10 }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Text style={{ fontSize: 18, fontWeight: "bold", color: "#1F2937" }}>
-                    new task
-                  </Text>
-                  <TouchableOpacity onPress={closeAddTask}>
-                    <X size={20} color="#9CA3AF" />
-                  </TouchableOpacity>
-                </View>
+            <Text style={{ fontSize: 22, fontWeight: "bold", color: "#1F2937" }}>
+              new task
+            </Text>
+            <TouchableOpacity
+              onPress={closeAddTask}
+              hitSlop={12}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: "rgba(0,0,0,0.07)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <X size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
 
-                <View style={{ gap: 4 }}>
-                  <Text style={{ fontSize: 11, fontWeight: "bold", color: "#9CA3AF", paddingLeft: 4 }}>task title</Text>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+          >
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ padding: 24, gap: 20 }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={{ gap: 20 }}>
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "bold", color: "#6B7280" }}>task title</Text>
                   <TextInput
                     value={taskTitle}
                     onChangeText={setTaskTitle}
                     placeholder="e.g. water the plants"
                     placeholderTextColor="#D1D5DB"
+                    autoFocus
                     style={{
-                      backgroundColor: "rgba(243, 244, 246, 0.5)",
+                      backgroundColor: "rgba(255,255,255,0.6)",
                       padding: 14,
-                      borderRadius: 16,
-                      fontSize: 14,
+                      borderRadius: 14,
+                      fontSize: 16,
                       color: "#374151",
                     }}
-                    autoFocus
                   />
                 </View>
 
-                <View style={{ gap: 4 }}>
-                  <Text style={{ fontSize: 11, fontWeight: "bold", color: "#9CA3AF", paddingLeft: 4 }}>energy level</Text>
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "bold", color: "#6B7280" }}>energy level</Text>
                   <View style={{ flexDirection: "row", gap: 8 }}>
                     {ENERGY_LEVELS.map((e) => (
                       <TouchableOpacity
@@ -577,7 +612,7 @@ export default function CalendarPage() {
                           paddingVertical: 10,
                           paddingHorizontal: 2,
                           borderRadius: 12,
-                          backgroundColor: taskEnergy === e ? themeColors.primary : "rgba(243, 244, 246, 0.5)",
+                          backgroundColor: taskEnergy === e ? themeColors.primary : "rgba(255,255,255,0.6)",
                           alignItems: "center",
                         }}
                       >
@@ -592,50 +627,57 @@ export default function CalendarPage() {
                   </View>
                 </View>
 
-                <SchedulePicker
-                  dateValue={scheduleDate}
-                  onDateChange={setScheduleDate}
-                  minutesValue={scheduleMinutes}
-                  onMinutesChange={setScheduleMinutes}
-                />
-
-                {scheduleMinutes != null && (
-                  <View style={{ backgroundColor: `${themeColors.primary}10`, padding: 12, borderRadius: 12 }}>
-                    <Text style={{ fontSize: 11, color: themeColors.primary, fontWeight: "bold" }}>
-                      shows in your daily planner at this time.
-                    </Text>
-                  </View>
-                )}
-
-                <View style={{ flexDirection: "row", gap: 12 }}>
-                  <TouchableOpacity
-                    onPress={closeAddTask}
-                    style={{ flex: 1, paddingVertical: 14, borderRadius: 16, backgroundColor: "rgba(243, 244, 246, 0.5)", alignItems: "center" }}
-                  >
-                    <Text style={{ fontSize: 14, fontWeight: "bold", color: "#9CA3AF" }}>cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleCreateTask}
-                    disabled={!taskTitle.trim()}
-                    style={{
-                      flex: 1,
-                      paddingVertical: 14,
-                      borderRadius: 16,
-                      backgroundColor: taskTitle.trim() ? themeColors.primary : "#E5E7EB",
-                      alignItems: "center",
-                      shadowColor: themeColors.primary,
-                      shadowOpacity: taskTitle.trim() ? 0.2 : 0,
-                      shadowRadius: 8,
-                      shadowOffset: { width: 0, height: 2 },
-                    }}
-                  >
-                    <Text style={{ fontSize: 14, fontWeight: "bold", color: taskTitle.trim() ? "#FFF" : "#9CA3AF" }}>add task</Text>
-                  </TouchableOpacity>
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "bold", color: "#6B7280" }}>schedule</Text>
+                  <SchedulePicker
+                    dateValue={scheduleDate}
+                    onDateChange={setScheduleDate}
+                    minutesValue={scheduleMinutes}
+                    onMinutesChange={setScheduleMinutes}
+                  />
+                  {scheduleMinutes != null && (
+                    <View style={{ backgroundColor: `${themeColors.primary}10`, padding: 12, borderRadius: 12 }}>
+                      <Text style={{ fontSize: 11, color: themeColors.primary, fontWeight: "bold" }}>
+                        shows in your daily planner at this time.
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
+            </ScrollView>
+
+            {/* Save button — pinned to bottom */}
+            <View
+              style={{
+                paddingHorizontal: 24,
+                paddingTop: 12,
+                paddingBottom: (useSafeAreaBottomInsets ?? 34) + 24,
+                backgroundColor: "rgba(255,255,255,0.95)",
+                borderTopWidth: 1,
+                borderTopColor: "rgba(0,0,0,0.06)",
+              }}
+            >
+              <TouchableOpacity
+                onPress={handleCreateTask}
+                disabled={!taskTitle.trim()}
+                style={{
+                  paddingVertical: 16,
+                  borderRadius: 16,
+                  backgroundColor: taskTitle.trim() ? themeColors.primary : "#E5E7EB",
+                  alignItems: "center",
+                  shadowColor: themeColors.primary,
+                  shadowOpacity: taskTitle.trim() ? 0.3 : 0,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 4 },
+                }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: "bold", color: taskTitle.trim() ? "#FFF" : "#9CA3AF" }}>
+                  add task
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
     </Shell>
   );

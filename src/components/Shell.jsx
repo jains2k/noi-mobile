@@ -3,9 +3,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Modal,
-  Pressable,
-  PanResponder,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -16,58 +13,31 @@ import {
   BookOpen,
   Calendar,
   Settings,
-  Menu,
-  X,
 } from "lucide-react-native";
-import { useMemo, useState } from "react";
 import { useRouter, usePathname } from "expo-router";
-import { useAuth } from "@/utils/auth/useAuth";
-import useUser from "@/utils/auth/useUser";
 import { useTheme } from "@/utils/ThemeProvider";
 import { useKeyboardAwareScroll } from "@/utils/useKeyboardAwareScroll";
-import { shouldDismissBottomSheetGesture } from "@/utils/bottomSheetGestures";
+
+const TAB_ITEMS = [
+  { name: "home", icon: LayoutGrid, href: "/dashboard" },
+  { name: "tasks", icon: CheckSquare, href: "/tasks" },
+  { name: "focus", icon: Timer, href: "/focus" },
+  { name: "journal", icon: BookOpen, href: "/journal" },
+  { name: "calendar", icon: Calendar, href: "/calendar" },
+];
+
+const TAB_BAR_HEIGHT = 60;
 
 export default function Shell({ children }) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const pathname = usePathname();
-  const { signOut } = useAuth();
-  const { data: user } = useUser();
   const { themeColors, fontFamily } = useTheme();
-  const [menuOpen, setMenuOpen] = useState(false);
   const { scrollRef, onScroll } = useKeyboardAwareScroll();
-
-  const closeMenu = () => setMenuOpen(false);
-
-  const menuPanResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dy) > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
-        onPanResponderRelease: (_, gestureState) => {
-          if (shouldDismissBottomSheetGesture(gestureState)) closeMenu();
-        },
-      }),
-    [],
-  );
-
-  const handleSignOut = async () => {
-    closeMenu();
-    await signOut();
-    router.replace("/landing");
-  };
-
-  const navItems = [
-    { name: "dashboard", icon: LayoutGrid, href: "/dashboard" },
-    { name: "tasks", icon: CheckSquare, href: "/tasks" },
-    { name: "focus", icon: Timer, href: "/focus" },
-    { name: "journal", icon: BookOpen, href: "/journal" },
-    { name: "calendar", icon: Calendar, href: "/calendar" },
-    { name: "settings", icon: Settings, href: "/settings" },
-  ];
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.bg1, fontFamily }}>
+      {/* Top header */}
       <View
         style={{
           paddingTop: insets.top + 4,
@@ -95,19 +65,19 @@ export default function Shell({ children }) {
           </Text>
         </View>
         <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Open navigation menu"
-          onPress={() => setMenuOpen(true)}
+          onPress={() => router.push("/settings")}
           style={{ padding: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Settings"
         >
-          <Menu size={24} color={themeColors.primary} />
+          <Settings size={22} color={themeColors.primary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         ref={scrollRef}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + insets.bottom + 20 }}
         showsVerticalScrollIndicator={false}
         automaticallyAdjustKeyboardInsets={true}
         keyboardShouldPersistTaps="handled"
@@ -118,181 +88,70 @@ export default function Shell({ children }) {
         {children}
       </ScrollView>
 
-      {/* Menu Modal */}
-      <Modal
-        visible={menuOpen}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={closeMenu}
-      >
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.2)" }}>
-          <Pressable
-            style={{ flex: 1 }}
-            onPress={closeMenu}
-          />
-          <Pressable
-            onPress={(event) => event.stopPropagation()}
-            style={{
-              backgroundColor: themeColors.bg1,
-              borderTopLeftRadius: 32,
-              borderTopRightRadius: 32,
-              paddingTop: 24,
-              paddingBottom: insets.bottom + 24,
-              paddingHorizontal: 20,
-            }}
-          >
-            <View
-              {...menuPanResponder.panHandlers}
-              accessibilityRole="button"
-              accessibilityLabel="Drag down to close navigation menu"
-              style={{ alignItems: "center", paddingBottom: 12 }}
-            >
-              <View
-                style={{
-                  width: 42,
-                  height: 5,
-                  borderRadius: 999,
-                  backgroundColor: "rgba(156, 163, 175, 0.55)",
-                }}
-              />
-            </View>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 24,
-              }}
-            >
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-              >
-                <Star
-                  size={24}
-                  color={themeColors.primary}
-                  fill={themeColors.primary}
-                />
-                <Text
-                  style={{
-                    fontSize: 24,
-                    fontWeight: "bold",
-                    color: themeColors.primary,
-                    fontFamily,
-                  }}
-                >
-                  noi
-                </Text>
-              </View>
-              <TouchableOpacity onPress={closeMenu}>
-                <X size={28} color={themeColors.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ gap: 8, marginBottom: 24 }}>
-              {navItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <TouchableOpacity
-                    key={item.name}
-                    onPress={() => {
-                      router.push(item.href);
-                      closeMenu();
-                    }}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 12,
-                      paddingVertical: 14,
-                      paddingHorizontal: 16,
-                      borderRadius: 16,
-                      backgroundColor: isActive
-                        ? "rgba(255, 255, 255, 0.4)"
-                        : "transparent",
-                    }}
-                  >
-                    <item.icon
-                      size={20}
-                      color={isActive ? themeColors.primary : "#9CA3AF"}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: isActive ? "600" : "400",
-                        color: isActive ? themeColors.primary : "#6B7280",
-                        fontFamily,
-                      }}
-                    >
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {user && (
-              <View
-                style={{
-                  paddingTop: 20,
-                  borderTopWidth: 1,
-                  borderTopColor: "rgba(255, 255, 255, 0.3)",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 12,
-                }}
-              >
-                <View
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: themeColors.primary,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#FFF",
-                      fontWeight: "bold",
-                      fontSize: 16,
-                      fontFamily,
-                    }}
-                  >
-                    {user.email?.[0]?.toUpperCase()}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "500",
-                      color: "#374151",
-                      fontFamily,
-                    }}
-                  >
-                    {user.email?.split("@")[0]}
-                  </Text>
-                  <TouchableOpacity onPress={handleSignOut}>
-                    <Text
-                      style={{ fontSize: 12, color: "#DC2626", fontFamily }}
-                    >
-                      sign out
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </Pressable>
-        </View>
-      </Modal>
-
-      {/* Floating decoration */}
+      {/* Native iOS-style bottom tab bar */}
       <View
         style={{
           position: "absolute",
-          bottom: 40,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: TAB_BAR_HEIGHT + insets.bottom,
+          backgroundColor: "rgba(255, 255, 255, 0.96)",
+          borderTopWidth: 1,
+          borderTopColor: "rgba(0, 0, 0, 0.06)",
+          flexDirection: "row",
+          shadowColor: "#000",
+          shadowOpacity: 0.06,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: -2 },
+          elevation: 10,
+        }}
+      >
+        {TAB_ITEMS.map((item) => {
+          const isActive =
+            pathname === item.href ||
+            (item.href === "/dashboard" && pathname === "/");
+          return (
+            <TouchableOpacity
+              key={item.name}
+              onPress={() => router.push(item.href)}
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "flex-start",
+                paddingTop: 10,
+                gap: 3,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={item.name}
+            >
+              <item.icon
+                size={24}
+                color={isActive ? themeColors.primary : "#C4C9D4"}
+                strokeWidth={isActive ? 2.2 : 1.8}
+              />
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: isActive ? "700" : "500",
+                  color: isActive ? themeColors.primary : "#C4C9D4",
+                  fontFamily,
+                }}
+              >
+                {item.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Floating star decoration */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: TAB_BAR_HEIGHT + insets.bottom + 20,
           right: 40,
-          opacity: 0.2,
+          opacity: 0.12,
           pointerEvents: "none",
         }}
       >
