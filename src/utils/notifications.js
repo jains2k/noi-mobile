@@ -38,6 +38,7 @@ export const MAX_SCHEDULED_NOTIFICATIONS = 50;
 export const DEFAULT_NOTIFICATION_PREFS = Object.freeze({
   taskReminders: false,
   taskReminderMinutes: 10,
+  showTaskTitles: false,
   todoReminders: false,
   todoStartHour: 9,
   todoIntervalHours: 3,
@@ -234,7 +235,9 @@ export function buildDesiredNotificationSchedule({
         key: `task:${task.id}`,
         content: {
           title: "upcoming task ✦",
-          body: `"${task.title || "Untitled task"}" starts in ${minutes} minutes`,
+          body: settings.showTaskTitles
+            ? `"${task.title || "Untitled task"}" starts in ${minutes} minutes`
+            : `a scheduled task starts in ${minutes} minutes`,
           data: { taskId: task.id, noiNotificationKey: `task:${task.id}` },
           sound: true,
         },

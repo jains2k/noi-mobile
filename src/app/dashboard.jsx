@@ -29,6 +29,7 @@ import { StatusBar } from "expo-status-bar";
 import { useAuth } from "@/utils/auth/useAuth";
 import { apiFetch } from "@/utils/api";
 import { useTheme } from "@/utils/ThemeProvider";
+import { ENERGY_LEVELS, energyLabelTextProps } from "@/utils/energyLevels";
 
 export default function Dashboard() {
   const { data: user } = useUser();
@@ -263,7 +264,7 @@ export default function Dashboard() {
             current energy:
           </Text>
           <View style={{ flexDirection: "row", gap: 8 }}>
-            {["low", "medium", "high"].map((e) => (
+            {ENERGY_LEVELS.map((e) => (
               <TouchableOpacity
                 key={e}
                 onPress={() => {
@@ -279,6 +280,7 @@ export default function Dashboard() {
                 }}
               >
                 <Text
+                  {...energyLabelTextProps}
                   style={{
                     fontSize: 12,
                     fontWeight: "bold",
@@ -572,6 +574,7 @@ export default function Dashboard() {
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    gap: 12,
                   }}
                 >
                   <View
@@ -579,6 +582,8 @@ export default function Dashboard() {
                       flexDirection: "row",
                       alignItems: "center",
                       gap: 12,
+                      flex: 1,
+                      minWidth: 0,
                     }}
                   >
                     <View
@@ -594,11 +599,19 @@ export default function Dashboard() {
                               : "#4ADE80",
                       }}
                     />
-                    <Text style={{ color: "#374151", fontSize: 14 }}>
+                    <Text
+                      style={{
+                        color: "#374151",
+                        fontSize: 14,
+                        flex: 1,
+                        flexShrink: 1,
+                      }}
+                    >
                       {task.title}
                     </Text>
                   </View>
                   <TouchableOpacity
+                    hitSlop={8}
                     onPress={async () => {
                       await apiFetch(`/api/tasks/${task.id}`, {
                         method: "PUT",

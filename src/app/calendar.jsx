@@ -29,6 +29,11 @@ import { useTheme } from "@/utils/ThemeProvider";
 import { useAuth } from "@/utils/auth/useAuth";
 import { apiFetch } from "@/utils/api";
 import SchedulePicker from "@/components/SchedulePicker";
+import {
+  ENERGY_LEVELS,
+  energyLabelTextProps,
+  getEnergyOptionFlex,
+} from "@/utils/energyLevels";
 
 export default function CalendarPage() {
   const { themeColors } = useTheme();
@@ -398,7 +403,13 @@ export default function CalendarPage() {
                     key={task.id}
                     style={{ backgroundColor: "rgba(255, 255, 255, 0.4)", padding: 16, borderRadius: 16, gap: 8 }}
                   >
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
                       {task.status === "completed" ? (
                         <CheckCircle2 size={16} color={themeColors.primary} />
                       ) : (
@@ -410,6 +421,8 @@ export default function CalendarPage() {
                           fontWeight: "bold",
                           color: task.status === "completed" ? "#9CA3AF" : "#374151",
                           textDecorationLine: task.status === "completed" ? "line-through" : "none",
+                          flex: 1,
+                          flexShrink: 1,
                         }}
                       >
                         {task.title}
@@ -555,19 +568,25 @@ export default function CalendarPage() {
                 <View style={{ gap: 4 }}>
                   <Text style={{ fontSize: 11, fontWeight: "bold", color: "#9CA3AF", paddingLeft: 4 }}>energy level</Text>
                   <View style={{ flexDirection: "row", gap: 8 }}>
-                    {["low", "medium", "high"].map((e) => (
+                    {ENERGY_LEVELS.map((e) => (
                       <TouchableOpacity
                         key={e}
                         onPress={() => setTaskEnergy(e)}
                         style={{
-                          flex: 1,
+                          flex: getEnergyOptionFlex(e),
                           paddingVertical: 10,
+                          paddingHorizontal: 2,
                           borderRadius: 12,
                           backgroundColor: taskEnergy === e ? themeColors.primary : "rgba(243, 244, 246, 0.5)",
                           alignItems: "center",
                         }}
                       >
-                        <Text style={{ fontSize: 12, fontWeight: "bold", color: taskEnergy === e ? "#FFF" : "#9CA3AF" }}>{e}</Text>
+                        <Text
+                          {...energyLabelTextProps}
+                          style={{ fontSize: 11, fontWeight: "bold", color: taskEnergy === e ? "#FFF" : "#9CA3AF" }}
+                        >
+                          {e}
+                        </Text>
                       </TouchableOpacity>
                     ))}
                   </View>

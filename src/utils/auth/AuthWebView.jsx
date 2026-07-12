@@ -3,6 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useAuthStore } from './store';
+import {
+  getHttpsOrigin,
+  isAllowedAuthNavigation,
+  isTokenCallback,
+  mapProxyUrlToBase,
+  parseAuthPayload,
+  parseTrustedAuthMessage,
+} from './authSecurity';
 
 const callbackUrl = '/api/auth/token';
 const callbackQueryString = `callbackUrl=${callbackUrl}`;
@@ -35,17 +43,19 @@ export const AuthWebView = ({ mode, proxyURL, baseURL }) => {
       return;
     }
     const handleMessage = (event) => {
-      // Verify the origin for security
-      if (event.origin !== process.env.EXPO_PUBLIC_PROXY_BASE_URL) {
-        return;
-      }
-      if (event.data.type === 'AUTH_SUCCESS') {
-        setAuth({
-          jwt: event.data.jwt,
-          user: event.data.user,
-        });
-      } else if (event.data.type === 'AUTH_ERROR') {
-        console.error('Auth error:', event.data.error);
+      if (event.data?.type === 'AUTH_SUCCESS') {
+        const authPayload = parseTrustedAuthMessage(
+          event,
+          proxyURL,
+          iframeRef.current?.contentWindow,
+        );
+        if (authPayload) setAuth(authPayload);
+      } else if (
+        event.data?.type === 'AUTH_ERROR'
+        && event.origin === getHttpsOrigin(proxyURL)
+        && event.source === iframeRef.current?.contentWindow
+      ) {
+        console.error('Authentication failed');
       }
     };
 
@@ -54,7 +64,7 @@ export const AuthWebView = ({ mode, proxyURL, baseURL }) => {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [setAuth]);
+  }, [proxyURL, setAuth]);
 
   if (Platform.OS === 'web') {
     const handleIframeError = () => {
@@ -84,25 +94,29 @@ export const AuthWebView = ({ mode, proxyURL, baseURL }) => {
         'x-createxyz-host': process.env.EXPO_PUBLIC_HOST,
       }}
       onShouldStartLoadWithRequest={(request) => {
-        if (request.url === `${baseURL}${callbackUrl}`) {
-          fetch(request.url).then(async (response) => {
-            response.json().then((data) => {
-              setAuth({ jwt: data.jwt, user: data.user });
-            });
-          });
+        if (isTokenCallback(request.url, baseURL)) {
+          fetch(request.url)
+            .then(async (response) => {
+              if (!response.ok) throw new Error(`Token exchange failed (${response.status})`);
+              const authPayload = parseAuthPayload(await response.json());
+              if (!authPayload) throw new Error('Invalid token response');
+              setAuth(authPayload);
+            })
+            .catch(() => console.error('Authentication token exchange failed'));
           return false;
         }
         if (request.url === currentURI) return true;
 
-        // Add query string properly by checking if URL already has parameters
-        const hasParams = request.url.includes('?');
-        const separator = hasParams ? '&' : '?';
-        const newURL = request.url.replaceAll(proxyURL, baseURL);
-        if (newURL.endsWith(callbackUrl)) {
+        if (!isAllowedAuthNavigation(request.url, [baseURL, proxyURL])) return false;
+
+        const newURL = mapProxyUrlToBase(request.url, proxyURL, baseURL);
+        if (isTokenCallback(newURL, baseURL)) {
           setURI(newURL);
           return false;
         }
-        setURI(`${newURL}${separator}${callbackQueryString}`);
+        const nextURL = new URL(newURL);
+        nextURL.searchParams.set('callbackUrl', callbackUrl);
+        setURI(nextURL.toString());
         return false;
       }}
       style={{ flex: 1 }}

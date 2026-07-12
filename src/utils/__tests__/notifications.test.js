@@ -58,6 +58,17 @@ describe("buildDesiredNotificationSchedule", () => {
     expect(schedule[0].key).toBe("task:valid");
     expect(schedule[0].trigger.type).toBe("date");
     expect(schedule[0].trigger.date.toISOString()).toBe("2026-07-03T12:50:00.000Z");
+    expect(schedule[0].content.body).toBe("a scheduled task starts in 10 minutes");
+  });
+
+  test("includes a task title only when lock-screen details are explicitly enabled", () => {
+    const schedule = buildDesiredNotificationSchedule({
+      now: NOW,
+      prefs: { taskReminders: true, taskReminderMinutes: 10, showTaskTitles: true },
+      tasks: [task("private", "2026-07-03T13:00:00.000Z", { title: "Medical appointment" })],
+    });
+
+    expect(schedule[0].content.body).toBe('"Medical appointment" starts in 10 minutes');
   });
 
   test("creates a bounded horizon of actionable planning reminders", () => {
@@ -157,7 +168,10 @@ describe("preferences and permissions", () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null);
 
-    await expect(getNotificationPrefs("first-user")).resolves.toMatchObject({ todoReminders: true });
+    await expect(getNotificationPrefs("first-user")).resolves.toMatchObject({
+      todoReminders: true,
+      showTaskTitles: false,
+    });
     await expect(getNotificationPrefs("second-user")).resolves.toMatchObject({ todoReminders: false });
     expect(AsyncStorage.removeItem).toHaveBeenCalledWith("@noi_notification_prefs");
     expect(AsyncStorage.setItem).toHaveBeenCalledWith(
@@ -170,6 +184,7 @@ describe("preferences and permissions", () => {
     AsyncStorage.getItem.mockResolvedValue("{");
     await expect(getNotificationPrefs("user-1")).resolves.toMatchObject({
       taskReminders: false,
+      showTaskTitles: false,
       todoReminders: false,
     });
   });
@@ -209,6 +224,27 @@ describe("reconcileNotifications", () => {
 
     await reconcileNotifications([], { userId: "u1", prefs, now: NOW });
     expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith("native-1");
+  });
+
+  test("replaces an existing task notification when privacy display changes", async () => {
+    const tasks = [task("private", "2026-07-03T13:00:00.000Z", { title: "Private task" })];
+    await reconcileNotifications(tasks, {
+      userId: "u1",
+      prefs: { taskReminders: true, taskReminderMinutes: 10, showTaskTitles: true },
+      now: NOW,
+    });
+    await reconcileNotifications(tasks, {
+      userId: "u1",
+      prefs: { taskReminders: true, taskReminderMinutes: 10, showTaskTitles: false },
+      now: NOW,
+    });
+
+    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith("native-1");
+    expect(Notifications.scheduleNotificationAsync).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        content: expect.objectContaining({ body: "a scheduled task starts in 10 minutes" }),
+      }),
+    );
   });
 
   test("disabling the final preference cancels owned notifications only", async () => {

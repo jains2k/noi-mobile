@@ -1,6 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 import { fetch as expoFetch } from 'expo/fetch';
 import { useAuthStore } from '@/utils/auth/store';
+import { resolveFirstPartyApiUrl } from '@/utils/apiSecurity';
+import { parseStoredAuth } from '@/utils/auth/authSecurity';
 
 const originalFetch = fetch;
 const authKey = `${process.env.EXPO_PUBLIC_PROJECT_GROUP_ID || 'noi-app'}-jwt`;
@@ -22,13 +24,6 @@ const isFileURL = (url: string) => {
   return url.startsWith('file://') || url.startsWith('data:');
 };
 
-const isFirstPartyURL = (url: string) => {
-  return (
-    url.startsWith('/') ||
-    (process.env.EXPO_PUBLIC_BASE_URL && url.startsWith(process.env.EXPO_PUBLIC_BASE_URL))
-  );
-};
-
 type Params = Parameters<typeof expoFetch>;
 const fetchToWeb = async function fetchWithHeaders(...args: Params) {
   const baseURL = process.env.EXPO_PUBLIC_BASE_URL;
@@ -42,35 +37,26 @@ const fetchToWeb = async function fetchWithHeaders(...args: Params) {
     return originalFetch(input, init);
   }
 
-  const isExternalFetch = !isFirstPartyURL(url);
-  // we should not add headers to requests that don't go to our own server
-  if (isExternalFetch) {
+  const firstPartyURL = resolveFirstPartyApiUrl(url, baseURL);
+  // Never attach credentials unless parsed URL origins match exactly.
+  if (!firstPartyURL) {
     return expoFetch(input, init);
   }
 
-  let finalInput = input;
-  if (typeof input === 'string') {
-    finalInput = input.startsWith('/') ? `${baseURL}${input}` : input;
-  } else {
+  if (typeof input !== 'string') {
     return expoFetch(input, init);
   }
 
   const initHeaders = init?.headers ?? {};
   const finalHeaders = new Headers(initHeaders);
 
-  const auth = await SecureStore.getItemAsync(authKey)
-    .then((auth) => {
-      return auth ? JSON.parse(auth) : null;
-    })
-    .catch(() => {
-      return null;
-    });
+  const auth = await SecureStore.getItemAsync(authKey).then(parseStoredAuth).catch(() => null);
 
   if (auth) {
     finalHeaders.set('authorization', `Bearer ${auth.jwt}`);
   }
 
-  const response = await expoFetch(finalInput, {
+  const response = await expoFetch(firstPartyURL, {
     ...init,
     headers: finalHeaders,
   });

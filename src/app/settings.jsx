@@ -81,6 +81,7 @@ export default function MobileSettings() {
   const [notifPrefs, setNotifPrefs] = useState({
     taskReminders: false,
     taskReminderMinutes: 10,
+    showTaskTitles: false,
     todoReminders: false,
     todoStartHour: 9,
     todoIntervalHours: 3,
@@ -536,7 +537,7 @@ export default function MobileSettings() {
 
                 {/* Minutes before picker */}
                 {notifPrefs.taskReminders && (
-                  <View style={{ paddingHorizontal: 8 }}>
+                  <View style={{ paddingHorizontal: 8, gap: 16 }}>
                     <Text style={{ fontSize: 11, fontWeight: "bold", color: "#9CA3AF", marginBottom: 8, paddingLeft: 4 }}>
                       remind me this many minutes before:
                     </Text>
@@ -561,6 +562,38 @@ export default function MobileSettings() {
                           </Text>
                         </TouchableOpacity>
                       ))}
+                    </View>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                      <View style={{ flex: 1, paddingRight: 12 }}>
+                        <Text style={{ fontSize: 12, fontWeight: "bold", color: "#6B7280" }}>
+                          show task names
+                        </Text>
+                        <Text style={{ fontSize: 11, color: "#9CA3AF", marginTop: 2 }}>
+                          names may be visible on your lock screen
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        accessibilityRole="switch"
+                        accessibilityLabel="Show task names in notifications"
+                        accessibilityState={{ checked: notifPrefs.showTaskTitles }}
+                        onPress={() => updateNotifPref("showTaskTitles", !notifPrefs.showTaskTitles)}
+                        style={{
+                          width: 48,
+                          height: 24,
+                          borderRadius: 12,
+                          backgroundColor: notifPrefs.showTaskTitles ? themeColors.primary : "#D1D5DB",
+                          padding: 2,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <View style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: 8,
+                          backgroundColor: "#FFF",
+                          alignSelf: notifPrefs.showTaskTitles ? "flex-end" : "flex-start",
+                        }} />
+                      </TouchableOpacity>
                     </View>
                   </View>
                 )}

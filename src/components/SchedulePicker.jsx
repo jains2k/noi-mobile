@@ -11,7 +11,9 @@ import { useTheme } from "@/utils/ThemeProvider";
 // screen space when the user is actually choosing. The date expands to Month and
 // Day wheels so months/dates can be scrolled freely. Time is optional ("no
 // time"). Cross-platform: wheels on iOS, dropdowns on Android/web (the picker
-// package ships its own web build).
+// package ships its own web build). iOS picker wheels do not reliably inherit
+// React Native text color across themes, so picker row color is set explicitly
+// to keep month/day/time values readable on light themed cards.
 //
 // Props:
 //   dateValue       Date  — the scheduled day (time portion ignored)
@@ -26,6 +28,12 @@ const labelStyle = {
   paddingLeft: 4,
   marginBottom: 4,
 };
+
+export const pickerTextColor = "#374151";
+
+export function getPickerItemStyle(platform) {
+  return platform === "ios" ? { fontSize: 18, color: pickerTextColor } : undefined;
+}
 
 // Months to offer: from the earlier of (this month, the value's month) forward
 // through ~14 months ahead, so a past date being edited stays selectable and
@@ -114,7 +122,7 @@ export default function SchedulePicker({
     ...(Platform.OS === "ios" ? { height: 180 } : {}),
   };
 
-  const iosItemStyle = Platform.OS === "ios" ? { fontSize: 18 } : undefined;
+  const iosItemStyle = getPickerItemStyle(Platform.OS);
 
   const dateSummary = (() => {
     const today = startOfDay(new Date());
@@ -159,7 +167,7 @@ export default function SchedulePicker({
           }}
         >
           <Text
-            style={{ fontSize: 15, fontWeight: "600", color: "#374151", flex: 1 }}
+            style={{ fontSize: 15, fontWeight: "600", color: pickerTextColor, flex: 1 }}
             numberOfLines={1}
           >
             {value}
@@ -190,7 +198,7 @@ export default function SchedulePicker({
                 onValueChange={onMonthChange}
                 itemStyle={iosItemStyle}
                 dropdownIconColor={themeColors.primary}
-                style={{ color: "#374151" }}
+                style={{ color: pickerTextColor }}
               >
                 {monthOptions.map((m) => {
                   const key = format(m, "yyyy-MM");
@@ -199,6 +207,7 @@ export default function SchedulePicker({
                       key={key}
                       label={format(m, "MMMM yyyy")}
                       value={key}
+                      color={pickerTextColor}
                     />
                   );
                 })}
@@ -214,10 +223,15 @@ export default function SchedulePicker({
                 onValueChange={onDayChange}
                 itemStyle={iosItemStyle}
                 dropdownIconColor={themeColors.primary}
-                style={{ color: "#374151" }}
+                style={{ color: pickerTextColor }}
               >
                 {dayOptions.map((d) => (
-                  <Picker.Item key={d} label={String(d)} value={String(d)} />
+                  <Picker.Item
+                    key={d}
+                    label={String(d)}
+                    value={String(d)}
+                    color={pickerTextColor}
+                  />
                 ))}
               </Picker>
             </View>
@@ -236,10 +250,15 @@ export default function SchedulePicker({
               }
               itemStyle={iosItemStyle}
               dropdownIconColor={themeColors.primary}
-              style={{ color: "#374151" }}
+              style={{ color: pickerTextColor }}
             >
               {timeOptions.map((o) => (
-                <Picker.Item key={o.value} label={o.label} value={o.value} />
+                <Picker.Item
+                  key={o.value}
+                  label={o.label}
+                  value={o.value}
+                  color={pickerTextColor}
+                />
               ))}
             </Picker>
           </View>

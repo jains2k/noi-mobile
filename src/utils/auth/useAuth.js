@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { create } from "zustand";
 import { Modal, View } from "react-native";
 import { useAuthModal, useAuthStore, authKey } from "./store";
+import { parseStoredAuth } from "./authSecurity";
 
 /**
  * This hook provides authentication functionality.
@@ -19,12 +20,12 @@ export const useAuth = () => {
     SecureStore.getItemAsync(authKey)
       .then((auth) => {
         useAuthStore.setState({
-          auth: auth ? JSON.parse(auth) : null,
+          auth: parseStoredAuth(auth),
           isReady: true,
         });
       })
-      .catch((error) => {
-        console.error("Error loading auth:", error);
+      .catch(() => {
+        console.error("Unable to load authentication state");
         // Still mark as ready even if there's an error, just with no auth
         useAuthStore.setState({
           auth: null,
@@ -43,11 +44,7 @@ export const useAuth = () => {
   }, [open]);
 
   const signOut = useCallback(async () => {
-    // Explicitly clear SecureStore first
-    await SecureStore.deleteItemAsync(authKey);
-    // Then update state
-    setAuth(null);
-    close();
+    if (await setAuth(null)) close();
   }, [close, setAuth]);
 
   return {

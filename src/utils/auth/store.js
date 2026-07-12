@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
+import { parseAuthPayload } from "./authSecurity";
 
 // Provide a fallback value if the env var is not set
 export const authKey = `${process.env.EXPO_PUBLIC_PROJECT_GROUP_ID || "noi-app"}-jwt`;
@@ -10,17 +11,23 @@ export const authKey = `${process.env.EXPO_PUBLIC_PROJECT_GROUP_ID || "noi-app"}
 export const useAuthStore = create((set) => ({
   isReady: false,
   auth: null,
-  setAuth: (auth) => {
+  setAuth: async (auth) => {
+    const validatedAuth = auth == null ? null : parseAuthPayload(auth);
+    if (auth != null && !validatedAuth) {
+      console.error("Refused to store invalid authentication state");
+      return false;
+    }
     try {
-      if (auth) {
-        SecureStore.setItemAsync(authKey, JSON.stringify(auth));
+      if (validatedAuth) {
+        await SecureStore.setItemAsync(authKey, JSON.stringify(validatedAuth));
       } else {
-        SecureStore.deleteItemAsync(authKey);
+        await SecureStore.deleteItemAsync(authKey);
       }
-      set({ auth });
+      set({ auth: validatedAuth });
+      return true;
     } catch (error) {
-      console.error("Error saving auth:", error);
-      set({ auth });
+      console.error("Unable to persist authentication state");
+      return false;
     }
   },
 }));

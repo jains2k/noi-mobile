@@ -1,6 +1,6 @@
 # Security hardening plan
 
-Last reviewed: 2026-07-03
+Last reviewed: 2026-07-04
 
 Scope: Noi iOS app, web app, and backend APIs.
 
@@ -85,6 +85,11 @@ return database messages or stack traces to clients.
 
 ### 9. Harden iOS authentication WebView and API origin checks
 
+Status: mobile-side origin/path enforcement, iframe source validation, and token
+response validation implemented on 2026-07-04. Bearer-token attachment now uses
+exact parsed-origin matching, and persisted auth is schema-validated. The one-time
+backend exchange is still pending.
+
 - Compare parsed URL origins rather than string prefixes.
 - Add a strict WebView origin allowlist and expected-path checks.
 - Reject non-HTTPS navigation.
@@ -93,6 +98,9 @@ return database messages or stack traces to clients.
 - Move final JWT delivery to the one-time exchange described above.
 
 ### 10. Protect notification privacy
+
+Status: implemented on 2026-07-04. Task names are hidden by default and can be
+enabled explicitly per account on trusted devices.
 
 Use generic lock-screen notification text by default or add an explicit setting
 that allows users to show task names.

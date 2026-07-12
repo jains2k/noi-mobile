@@ -2,7 +2,7 @@
   "expo": {
     "name": "noi",
     "slug": "noi",
-    "version": "1.0.4",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "com.createinc.c73300dd5f5e4b5ea4a559f9ecd813e4",
@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.createinc.c73300dd5f5e4b5ea4a559f9ecd813e4",
-      "buildNumber": "42",
+      "buildNumber": "44",
       "infoPlist": {
         "NSCameraUsageDescription": "This app does not use your camera.",
         "NSContactsUsageDescription": "This app does not use your contacts.",

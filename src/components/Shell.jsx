@@ -1,4 +1,12 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  Pressable,
+  PanResponder,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Star,
@@ -11,12 +19,13 @@ import {
   Menu,
   X,
 } from "lucide-react-native";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, usePathname } from "expo-router";
 import { useAuth } from "@/utils/auth/useAuth";
 import useUser from "@/utils/auth/useUser";
 import { useTheme } from "@/utils/ThemeProvider";
 import { useKeyboardAwareScroll } from "@/utils/useKeyboardAwareScroll";
+import { shouldDismissBottomSheetGesture } from "@/utils/bottomSheetGestures";
 
 export default function Shell({ children }) {
   const insets = useSafeAreaInsets();
@@ -28,8 +37,22 @@ export default function Shell({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { scrollRef, onScroll } = useKeyboardAwareScroll();
 
+  const closeMenu = () => setMenuOpen(false);
+
+  const menuPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dy) > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+        onPanResponderRelease: (_, gestureState) => {
+          if (shouldDismissBottomSheetGesture(gestureState)) closeMenu();
+        },
+      }),
+    [],
+  );
+
   const handleSignOut = async () => {
-    setMenuOpen(false);
+    closeMenu();
     await signOut();
     router.replace("/landing");
   };
@@ -100,15 +123,15 @@ export default function Shell({ children }) {
         visible={menuOpen}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setMenuOpen(false)}
+        onRequestClose={closeMenu}
       >
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.2)" }}>
-          <TouchableOpacity
+          <Pressable
             style={{ flex: 1 }}
-            activeOpacity={1}
-            onPress={() => setMenuOpen(false)}
+            onPress={closeMenu}
           />
-          <View
+          <Pressable
+            onPress={(event) => event.stopPropagation()}
             style={{
               backgroundColor: themeColors.bg1,
               borderTopLeftRadius: 32,
@@ -118,6 +141,21 @@ export default function Shell({ children }) {
               paddingHorizontal: 20,
             }}
           >
+            <View
+              {...menuPanResponder.panHandlers}
+              accessibilityRole="button"
+              accessibilityLabel="Drag down to close navigation menu"
+              style={{ alignItems: "center", paddingBottom: 12 }}
+            >
+              <View
+                style={{
+                  width: 42,
+                  height: 5,
+                  borderRadius: 999,
+                  backgroundColor: "rgba(156, 163, 175, 0.55)",
+                }}
+              />
+            </View>
             <View
               style={{
                 flexDirection: "row",
@@ -145,7 +183,7 @@ export default function Shell({ children }) {
                   noi
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setMenuOpen(false)}>
+              <TouchableOpacity onPress={closeMenu}>
                 <X size={28} color={themeColors.primary} />
               </TouchableOpacity>
             </View>
@@ -158,7 +196,7 @@ export default function Shell({ children }) {
                     key={item.name}
                     onPress={() => {
                       router.push(item.href);
-                      setMenuOpen(false);
+                      closeMenu();
                     }}
                     style={{
                       flexDirection: "row",
@@ -244,7 +282,7 @@ export default function Shell({ children }) {
                 </View>
               </View>
             )}
-          </View>
+          </Pressable>
         </View>
       </Modal>
 

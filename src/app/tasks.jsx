@@ -5,8 +5,10 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  Pressable,
+  PanResponder,
 } from "react-native";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Shell from "@/components/Shell";
 import {
   Plus,
@@ -27,6 +29,12 @@ import { useTheme } from "@/utils/ThemeProvider";
 import { useAuth } from "@/utils/auth/useAuth";
 import { apiFetch } from "@/utils/api";
 import SchedulePicker from "@/components/SchedulePicker";
+import { shouldDismissBottomSheetGesture } from "@/utils/bottomSheetGestures";
+import {
+  ENERGY_LEVELS,
+  energyLabelTextProps,
+  getEnergyOptionFlex,
+} from "@/utils/energyLevels";
 
 export default function TasksPage() {
   const queryClient = useQueryClient();
@@ -50,6 +58,24 @@ export default function TasksPage() {
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleDate, setScheduleDate] = useState(new Date());
   const [scheduleMinutes, setScheduleMinutes] = useState(null);
+
+  const closeTaskSheet = () => {
+    setIsAdding(false);
+    setEditingTask(null);
+    resetForm();
+  };
+
+  const sheetPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Math.abs(gestureState.dy) > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+        onPanResponderRelease: (_, gestureState) => {
+          if (shouldDismissBottomSheetGesture(gestureState)) closeTaskSheet();
+        },
+      }),
+    [],
+  );
 
   const resetForm = () => {
     setFormData({
@@ -353,6 +379,7 @@ export default function TasksPage() {
                     style={{
                       flexDirection: "row",
                       justifyContent: "space-between",
+                      gap: 12,
                     }}
                   >
                     <View
@@ -361,6 +388,7 @@ export default function TasksPage() {
                         alignItems: "center",
                         gap: 12,
                         flex: 1,
+                        minWidth: 0,
                       }}
                     >
                       <TouchableOpacity
@@ -384,7 +412,7 @@ export default function TasksPage() {
                           <Circle size={24} color="#D1D5DB" />
                         )}
                       </TouchableOpacity>
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, minWidth: 0 }}>
                         <Text
                           style={{
                             fontSize: 16,
@@ -398,6 +426,7 @@ export default function TasksPage() {
                                 ? "line-through"
                                 : "none",
                             fontFamily,
+                            flexShrink: 1,
                           }}
                         >
                           {task.title}
@@ -572,20 +601,18 @@ export default function TasksPage() {
         visible={isAdding || editingTask !== null}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => {
-          setIsAdding(false);
-          setEditingTask(null);
-          resetForm();
-        }}
+        onRequestClose={closeTaskSheet}
       >
-        <View
+        <Pressable
+          onPress={closeTaskSheet}
           style={{
             flex: 1,
             backgroundColor: "rgba(0,0,0,0.2)",
             justifyContent: "flex-end",
           }}
         >
-          <View
+          <Pressable
+            onPress={(event) => event.stopPropagation()}
             style={{
               backgroundColor: "#FFF",
               borderTopLeftRadius: 32,
@@ -594,6 +621,21 @@ export default function TasksPage() {
               maxHeight: "90%",
             }}
           >
+            <View
+              {...sheetPanResponder.panHandlers}
+              accessibilityRole="button"
+              accessibilityLabel="Drag down to close task editor"
+              style={{ alignItems: "center", paddingBottom: 12 }}
+            >
+              <View
+                style={{
+                  width: 42,
+                  height: 5,
+                  borderRadius: 999,
+                  backgroundColor: "#D1D5DB",
+                }}
+              />
+            </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text
                 style={{
@@ -680,15 +722,16 @@ export default function TasksPage() {
                       energy
                     </Text>
                     <View style={{ flexDirection: "row", gap: 4 }}>
-                      {["low", "medium", "high"].map((e) => (
+                      {ENERGY_LEVELS.map((e) => (
                         <TouchableOpacity
                           key={e}
                           onPress={() =>
                             setFormData({ ...formData, energy_level: e })
                           }
                           style={{
-                            flex: 1,
+                            flex: getEnergyOptionFlex(e),
                             paddingVertical: 8,
+                            paddingHorizontal: 2,
                             borderRadius: 8,
                             backgroundColor:
                               formData.energy_level === e
@@ -698,8 +741,9 @@ export default function TasksPage() {
                           }}
                         >
                           <Text
+                            {...energyLabelTextProps}
                             style={{
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: "bold",
                               color:
                                 formData.energy_level === e
@@ -884,11 +928,7 @@ export default function TasksPage() {
 
               <View style={{ flexDirection: "row", gap: 12, marginTop: 24 }}>
                 <TouchableOpacity
-                  onPress={() => {
-                    setIsAdding(false);
-                    setEditingTask(null);
-                    resetForm();
-                  }}
+                  onPress={closeTaskSheet}
                   style={{
                     flex: 1,
                     paddingVertical: 12,
@@ -928,8 +968,8 @@ export default function TasksPage() {
                 </TouchableOpacity>
               </View>
             </ScrollView>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </Shell>
   );
