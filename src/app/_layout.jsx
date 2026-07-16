@@ -43,6 +43,8 @@ import {
   Lexend_600SemiBold,
 } from "@expo-google-fonts/lexend";
 import { SpaceMono_400Regular } from "@expo-google-fonts/space-mono";
+import { setAnalyticsUser, trackEvent, trackScreen } from "@/utils/analytics";
+import { featureFromPathname, notificationType } from "@/utils/analyticsEvents";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -61,6 +63,23 @@ function SessionGuard() {
       router.replace("/landing");
     }
   }, [isReady, isAuthenticated, pathname, router]);
+
+  return null;
+}
+
+/** Tracks meaningful feature visits and authenticated return usage on iOS. */
+function AnalyticsCoordinator() {
+  const pathname = usePathname();
+  const { auth, isReady } = useAuth();
+
+  useEffect(() => {
+    if (isReady) setAnalyticsUser(auth?.user?.id ?? null);
+  }, [auth?.user?.id, isReady]);
+
+  useEffect(() => {
+    const feature = featureFromPathname(pathname);
+    if (feature) trackScreen(feature);
+  }, [pathname]);
 
   return null;
 }
@@ -141,12 +160,23 @@ function NotificationCoordinator() {
   }, [userId]);
 
   const handleNotificationResponse = useCallback(
-    async (response) => {
+    async (response, source = "background") => {
       if (!isReady || !isAuthenticated || !response) return;
 
       const identifier = response.notification?.request?.identifier;
       if (identifier && handledResponseRef.current === identifier) return;
       handledResponseRef.current = identifier ?? response;
+
+      const action = response.actionIdentifier === PLANNING_DONE_ACTION
+        ? "done"
+        : response.actionIdentifier === PLANNING_SNOOZE_ACTION
+          ? "snooze"
+          : "opened";
+      trackEvent("notification_response", {
+        notification_type: notificationType(response),
+        action,
+        app_state: source,
+      });
 
       if (response.actionIdentifier === PLANNING_DONE_ACTION) {
         try {
@@ -170,10 +200,10 @@ function NotificationCoordinator() {
 
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(
-      handleNotificationResponse
+      (response) => handleNotificationResponse(response, "background")
     );
     Notifications.getLastNotificationResponseAsync()
-      .then(handleNotificationResponse)
+      .then((response) => handleNotificationResponse(response, "cold_start"))
       .catch((error) => {
         console.error("Failed to read the last notification response:", error);
       });
@@ -254,6 +284,7 @@ export default function RootLayout() {
               <Stack.Screen name="settings" options={{ headerShown: false }} />
             </Stack>
             <SessionGuard />
+            <AnalyticsCoordinator />
             <NotificationCoordinator />
             <AuthModal />
           </GestureHandlerRootView>

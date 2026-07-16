@@ -16,6 +16,9 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+# Firebase's iOS configuration identifies the project and should be supplied
+# locally or through the protected build environment.
+GoogleService-Info.plist
 
 # Metro
 .metro-health-check*

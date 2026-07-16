@@ -107,6 +107,34 @@ reloading the browser tab.
 Task names are hidden from notification bodies by default to protect lock-screen
 privacy. Enable **show task names** in Settings only on a trusted device.
 
+## Firebase Analytics (iOS only)
+
+The iOS app uses Firebase Analytics to record feature screen visits, successful
+feature actions, AI feature usage, and responses to local notifications.
+The web implementation is a no-op. Events never include task IDs/titles, AI input,
+journal text, mood notes, email addresses, notification text, or other
+user-authored content. The opaque app user ID is set as Firebase's user ID so
+return usage can be measured across sessions.
+
+The `noi---keep-it-simple` Firebase project is owned by the same Google account
+as Mindcraft while keeping each product's analytics separate. Its iOS app uses
+bundle ID `com.createinc.c73300dd5f5e4b5ea4a559f9ecd813e4`. Download that app's
+`GoogleService-Info.plist`, then place it in this directory. It is intentionally
+ignored by Git; CI/EAS must inject it as a protected file before evaluating the
+Expo configuration.
+
+After installing dependencies, run `npx expo prebuild --clean` and rebuild the
+native app. An already-installed development build must be uninstalled first
+because it does not contain the newly added native Firebase modules. Expo Go
+cannot load React Native Firebase. The analytics iOS pod is built without Ad ID
+support.
+
+Use Firebase DebugView during verification by adding `-FIRDebugEnabled` to the
+Xcode scheme launch arguments. Visit every feature, create and complete a task,
+use each AI action, and tap each reminder action. Confirm `screen_view`,
+`feature_used`, and
+`notification_response` arrive with only the documented aggregate properties.
+
 ## Authentication security checks
 
 The native authentication WebView permits only HTTPS navigation on the configured
