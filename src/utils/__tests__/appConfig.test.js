@@ -3,7 +3,7 @@ const resolveAppConfig = require("../../../app.config");
 describe("Expo app configuration", () => {
   const baseConfig = {
     name: "noi",
-    ios: { bundleIdentifier: "com.example.noi", buildNumber: "46" },
+    ios: { bundleIdentifier: "com.example.noi", buildNumber: "47" },
   };
 
   afterEach(() => {

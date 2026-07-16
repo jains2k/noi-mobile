@@ -129,6 +129,11 @@ it from the local plist before a release; `app.config.js` falls back to the igno
 root file for local builds. Verify the resolved cloud configuration with
 `npx eas-cli config --platform ios --profile production`.
 
+Before choosing a release version, check the live App Store version as well as
+recent EAS builds. The marketing version must be greater than the live version,
+and every uploaded binary needs a new build number. Keep `app.json` and the Xcode
+target's `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` synchronized.
+
 After installing dependencies, run `npx expo prebuild --clean` and rebuild the
 native app. An already-installed development build must be uninstalled first
 because it does not contain the newly added native Firebase modules. Expo Go
