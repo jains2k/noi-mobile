@@ -123,6 +123,12 @@ bundle ID `com.createinc.c73300dd5f5e4b5ea4a559f9ecd813e4`. Download that app's
 ignored by Git; CI/EAS must inject it as a protected file before evaluating the
 Expo configuration.
 
+Cloud production builds use the project-scoped, secret file environment variable
+`GOOGLE_SERVICE_INFO_PLIST` in the EAS `production` environment. Create or update
+it from the local plist before a release; `app.config.js` falls back to the ignored
+root file for local builds. Verify the resolved cloud configuration with
+`npx eas-cli config --platform ios --profile production`.
+
 After installing dependencies, run `npx expo prebuild --clean` and rebuild the
 native app. An already-installed development build must be uninstalled first
 because it does not contain the newly added native Firebase modules. Expo Go
